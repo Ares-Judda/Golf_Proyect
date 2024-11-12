@@ -18,8 +18,8 @@ class Server {
     }    
 
     routes() {
-        this.app.use('/api/usuarios', require('../routes/user'));  // Ruta para usuarios
-        this.app.use('/api/auth', require('../routes/auth'));      // Ruta para autenticación
+        this.app.use('/api/usuarios', require('../routes/user'));  
+        this.app.use('/api/auth', require('../routes/auth'));     
     }
 
     listen (){

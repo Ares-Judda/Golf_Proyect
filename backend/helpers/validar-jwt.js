@@ -12,24 +12,18 @@ const userTokenManager = require('../helpers/user-token-manager');
  * @param {Function} next - La función para pasar al siguiente middleware o ruta.
  */
 const validarJWT = (req, res, next) => {
-    const ID_User = Object.keys(userTokenManager.users)[0];  // O puedes obtenerlo de req.headers si ya se envió por header
-
-    // Verificar si el usuario tiene un token almacenado en el UserTokenManager.
+    const ID_User = Object.keys(userTokenManager.users)[0];
     if (!ID_User) {
         return res.status(400).json({ mensaje: 'Falta el ID del usuario' });
     }
-
-    // Verificar la validez del token usando el JWTManager.
     const user = userTokenManager.getUser(ID_User);
     if (!user || !user.token) {
         return res.status(401).json({ mensaje: 'No hay token activo para este usuario' });
     }
-
     const verifiedUid = jwtManager.verifyToken(user.token);
     if (!verifiedUid) {
         return res.status(401).json({ mensaje: 'Token no válido' });
     }
-
     req.uid = verifiedUid; 
     next();
 };

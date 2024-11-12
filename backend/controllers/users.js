@@ -1,6 +1,7 @@
 const { response } = require('express');
 const connection = require('../models/database');
 const userTokenManager = require('../helpers/user-token-manager'); 
+const bcrypt = require('bcrypt');
 
 /**
  * Obtiene lista de todos los usuarios de la base de datos.
@@ -35,9 +36,10 @@ const save_usuario = async (req, res = response) => {
         if (!email || !password || !imagen) {
             return res.status(400).json({ error: 'Faltan campos obligatorios' });
         }
+        const hashedPassword = await hashPassword(password);
         connection.query(
             'INSERT INTO user (email, password, role, imagen) VALUES (?, ?, ?, ?)',
-            [email, password, role, imagen],
+            [email, hashedPassword, role, imagen],
             (err, result) => {
                 if (err) {
                     console.error('Error al guardar el usuario: ', err);
@@ -144,6 +146,12 @@ const logout_usuario = (req, res = response) => {
         res.status(500).json({ mensaje: 'Error al cerrar sesión' });
     }
 };
+
+async function hashPassword(password) {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    return hashedPassword; 
+}
 
 module.exports = {
     get_all_usuarios,
