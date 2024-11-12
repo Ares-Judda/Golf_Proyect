@@ -25,33 +25,34 @@ const get_all_usuarios = async (req, res = response) => {
 };
 
 /**
- * Registra un usuario en la base de datos.
- * Este método recibe los datos del usuario en el cuerpo de la solicitud y los guarda en la base de datos.
+ * Guarda un usuario en la base de datos si el correo no existe.
  * @param {*} req - La solicitud HTTP con los campos obligatorios email, username y password en el cuerpo.
  * @param {*} res - La respuesta HTTP que contiene el resultado de la operación en formato JSON.
  */
 const save_usuario = async (req, res = response) => {
-    try { 
-        const { email, role, password, imagen } = req.body;
-        if (!email || !password || !imagen) {
+    try {
+        const { email, role, password, imagen, name, lastname, userName } = req.body;
+        if (!email || !password || !imagen || !name || !lastname || !userName) {
             return res.status(400).json({ error: 'Faltan campos obligatorios' });
         }
+        const existEmail = await emailExist(email);
+        if (existEmail) {
+            return res.status(400).json({ error: 'El correo ya está registrado' });
+        }
+        const existUserName = await userNameExist(userName);
+        if (existUserName) {
+            return res.status(400).json({ error: 'El nombre de usuaio ya está registrado' });
+        }
         const hashedPassword = await hashPassword(password);
-        connection.query(
-            'INSERT INTO user (email, password, role, imagen) VALUES (?, ?, ?, ?)',
-            [email, hashedPassword, role, imagen],
-            (err, result) => {
-                if (err) {
-                    console.error('Error al guardar el usuario: ', err);
-                    return res.status(400).json({ error: 'Error al guardar el usuario' });
-                }
-                res.json({ mensaje: 'Usuario actualizado exitosamente' });
-                console.log("Se a agregado un nuevo usuario");
-            }
-        );
+        const userId = await insertUser({ email, hashedPassword, role, imagen, userName });
+        const response = await registerTypeUser(email, role, name, lastname, userId);
+        if (!response.success) {
+            return res.status(500).json({ error: response.message });
+        }
+        res.json({ mensaje: 'Usuario registrado exitosamente' });
     } catch (error) {
-        console.error('Error al guardar el usuario: ', error);
-        res.status(400).json({ error: 'Error al guardar el usuario' });
+        console.error('Error al guardar el usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -147,10 +148,78 @@ const logout_usuario = (req, res = response) => {
     }
 };
 
+/**
+ * Inserta un nuevo usuario en la base de datos.
+ * @param {Object} userData - Los datos del usuario a registrar.
+ * @returns {Promise<string>} - Devuelve el ID del usuario recién registrado.
+ */
+async function insertUser(userData) {
+    const { email, hashedPassword, role, imagen, userName } = userData;
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'INSERT INTO user (ID_User, email, password, role, imagen, username) VALUES (UUID(), ?, ?, ?, ?, ?)',
+            [email, hashedPassword, role, imagen, userName],
+            (err, result) => {
+                if (err) {
+                    console.error('Error al guardar el usuario:', err);
+                    return reject(new Error('Error al guardar el usuario'));
+                }
+                connection.query('SELECT ID_User FROM user WHERE email = ?', [email], (err, results) => {
+                    if (err || results.length === 0) {
+                        console.error('Error al recuperar el ID del usuario:', err);
+                        return reject(new Error('Error al recuperar el ID del usuario'));
+                    }
+                    resolve(results[0].ID_User);
+                });
+            }
+        );
+    });
+}
+
 async function hashPassword(password) {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     return hashedPassword; 
+}
+
+async function registerTypeUser(email, role, name, lastname, userId) {
+    return new Promise((resolve) => {
+        const query = role === 'CLIENT_ROLE'
+            ? 'INSERT INTO client (ID_Client, name, lastname, ID_User) VALUES (?, ?, ?, ?)'
+            : 'INSERT INTO selling (ID_Selling, name, lastname, ID_User) VALUES (?, ?, ?, ?)';
+
+        connection.query(query, [email, name, lastname, userId], (err, result) => {
+            if (err) {
+                console.error(`Error al guardar el usuario de tipo ${role}: `, err);
+                return resolve({ success: false, message: 'Error al guardar el usuario en el tipo correspondiente' });
+            }
+            resolve({ success: true });
+        });
+    });
+}
+
+async function emailExist(email) {
+    return new Promise((resolve, reject) => {
+        connection.query('SELECT * FROM user WHERE email = ?', [email], (err, results) => {
+            if (err) {
+                console.error('Error al verificar el correo:', err);
+                return reject(new Error('Error interno del servidor'));
+            }
+            resolve(results.length > 0);
+        });
+    });
+}
+
+async function userNameExist(userName) {
+    return new Promise((resolve, reject) => {
+        connection.query('SELECT * FROM user WHERE username = ?', [userName], (err, results) => {
+            if (err) {
+                console.error('Error al verificar el nombre de usuario:', err);
+                return reject(new Error('Error interno del servidor'));
+            }
+            resolve(results.length > 0);
+        });
+    });
 }
 
 module.exports = {
