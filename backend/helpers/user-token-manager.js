@@ -11,10 +11,9 @@ class UserTokenManager {
      * Agrega un nuevo usuario al gestor de tokens.
      * @param {string} email - El correo electrónico del usuario.
      * @param {string} uid - El identificador único del usuario.
-     * @param {string} token - El token JWT del usuario.
      */
-    addUser(email, uid, token) {
-        this.users[uid] = { email, token };
+    addUser(email, uid) {
+        this.users[uid] = { email };
     }
 
     /**

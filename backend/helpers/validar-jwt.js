@@ -16,11 +16,7 @@ const validarJWT = (req, res, next) => {
     if (!ID_User) {
         return res.status(400).json({ mensaje: 'Falta el ID del usuario' });
     }
-    const user = userTokenManager.getUser(ID_User);
-    if (!user || !user.token) {
-        return res.status(401).json({ mensaje: 'No hay token activo para este usuario' });
-    }
-    const verifiedUid = jwtManager.verifyToken(user.token);
+    const verifiedUid = jwtManager.verifyToken(ID_User);
     if (!verifiedUid) {
         return res.status(401).json({ mensaje: 'Token no válido' });
     }
