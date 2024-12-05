@@ -5,25 +5,30 @@ const connection = require('./database');
 const path = require('path');
 const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
+const grpcServer = require('../services/userService'); 
+const upload = require('../helpers/multerConfig');
 
 class Server {
-    constructor(){
+    constructor() {
         this.app = express();
         this.port = process.env.PORT;
         this.swaggerDocument = YAML.load(path.join(__dirname, '../swagger.yaml'));
         this.middlewares();
         this.routes();
         this.setupSwagger();
-    }
+        grpcServer.start();  
+    }  
 
     middlewares() {
         this.app.use(cors({
-            origin: '*', // Permite cualquier origen
-            methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos HTTP permitidos
-            allowedHeaders: ['Content-Type', 'Authorization'], // Headers permitidos
+            origin: '*', 
+            methods: ['GET', 'POST', 'PUT', 'DELETE'], 
+            allowedHeaders: ['Content-Type', 'Authorization'], 
         }));
         this.app.use(express.json());  
         this.app.use(express.static('public'));
+        this.app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
     }   
 
     routes() {

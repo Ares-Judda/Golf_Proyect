@@ -26,7 +26,11 @@ const login = async (req, res = response) => {
             userTokenManager.addUser(email, usuario.ID_User);
             res.header('x-token', token); 
             console.log(`Token enviado en el header: ${token}`);
-            res.json(usuario);
+            res.json({
+                idUser: usuario.ID_User,
+                email: usuario.email,
+                role: usuario.role
+            });
         });
     } catch (error) {
         console.error('Error en el logueo de usuario', error);

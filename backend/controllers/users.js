@@ -2,6 +2,7 @@ const { response } = require('express');
 const connection = require('../models/database');
 const userTokenManager = require('../helpers/user-token-manager'); 
 const bcrypt = require('bcrypt');
+const upload = require('../helpers/multerConfig');
 
 /**
  * Obtiene la lista de todos los usuarios de la base de datos.
@@ -46,7 +47,7 @@ const save_usuario = async (req, res = response) => {
         }
         const hashedPassword = await hashPassword(password);
         const userId = await insertUser({ email, hashedPassword, role, imagen, userName });
-        const response = await registerTypeUser(email, role, name, lastname, userId);
+        const response = await registerTypeUser(role, name, lastname, userId);
         if (!response.success) {
             return res.status(500).json({ error: response.message });
         }
@@ -216,13 +217,13 @@ async function hashPassword(password) {
  * @param {string} userId - ID del usuario en la tabla `user`.
  * @returns {Promise<Object>} - Devuelve un objeto con `success: true` si la operación fue exitosa o un mensaje de error en caso de falla.
  */
-async function registerTypeUser(email, role, name, lastname, userId) {
+async function registerTypeUser(role, name, lastname, userId) {
     return new Promise((resolve) => {
         const query = role === 'CLIENT_ROLE'
             ? 'INSERT INTO client (ID_Client, name, lastname, ID_User) VALUES (?, ?, ?, ?)'
             : 'INSERT INTO selling (ID_Selling, name, lastname, ID_User) VALUES (?, ?, ?, ?)';
 
-        connection.query(query, [email, name, lastname, userId], (err, result) => {
+        connection.query(query, [userId, name, lastname, userId], (err, result) => {
             if (err) {
                 console.error(`Error al guardar el usuario de tipo ${role}: `, err);
                 return resolve({ success: false, message: 'Error al guardar el usuario en el tipo correspondiente' });
