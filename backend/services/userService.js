@@ -8,12 +8,14 @@ const UserService = grpcObject.UserService;
 
 const server = new grpc.Server();
 
+// Definir los servicios gRPC
 server.addService(UserService.service, {
     GetAllUsuarios: async (call, callback) => {
         try {
             const usuarios = await get_all_usuarios();
             callback(null, { usuarios });
         } catch (error) {
+            console.error("Error al obtener usuarios:", error);
             callback({
                 code: grpc.status.INTERNAL,
                 details: "Error al obtener los usuarios"
@@ -27,6 +29,7 @@ server.addService(UserService.service, {
             await save_usuario({ email, role, password, imagen, name, lastname, username });
             callback(null, { mensaje: 'Usuario registrado exitosamente' });
         } catch (error) {
+            console.error("Error al registrar el usuario:", error);
             callback({
                 code: grpc.status.INTERNAL,
                 details: 'Error al registrar el usuario'
@@ -36,12 +39,31 @@ server.addService(UserService.service, {
 
     GetUsuario: async (call, callback) => {
         try {
-            const usuario = await get_usuario(call.request);
-            callback(null, usuario);
+            const { idUser } = call.request;
+            const user = await get_usuario(idUser);
+            if (!user) {
+                return callback({
+                    code: grpc.status.NOT_FOUND,
+                    details: 'Usuario no encontrado',
+                });
+            }
+            callback(null, {
+                email: user.email,
+                role: user.role,
+                imagen: user.imagen,
+                username: user.username,
+                name: user.name,
+                lastname: user.lastname,
+                cellphone: user.cellphone,
+                datebirth: user.datebirth,
+                address: user.address,
+                zipcode: user.zipcode,
+            });
         } catch (error) {
+            console.error("Error al obtener usuario:", error);
             callback({
-                code: grpc.status.NOT_FOUND,
-                details: 'Usuario no encontrado'
+                code: grpc.status.INTERNAL,
+                details: 'Error al obtener usuario',
             });
         }
     },
@@ -52,6 +74,7 @@ server.addService(UserService.service, {
             await update_usuario_body({ idUser, email, username, imagen });
             callback(null, { mensaje: 'Usuario actualizado exitosamente' });
         } catch (error) {
+            console.error("Error al actualizar el usuario:", error);
             callback({
                 code: grpc.status.INTERNAL,
                 details: 'Error al actualizar el usuario'
@@ -65,6 +88,7 @@ server.addService(UserService.service, {
             await logout_usuario({ idUser });
             callback(null, { mensaje: 'Sesión cerrada exitosamente' });
         } catch (error) {
+            console.error("Error al cerrar sesión:", error);
             callback({
                 code: grpc.status.INTERNAL,
                 details: 'Error al cerrar sesión'
@@ -73,7 +97,7 @@ server.addService(UserService.service, {
     }
 });
 
-// Exportar una función que inicie el servidor sin necesidad de llamar a start()
+// Exportar una función que inicie el servidor
 module.exports.start = () => {
     server.bindAsync('127.0.0.1:50051', grpc.ServerCredentials.createInsecure(), (error, port) => {
         if (error) {
@@ -81,6 +105,5 @@ module.exports.start = () => {
             return;
         }
         console.log(`gRPC Server corriendo en http://127.0.0.1:${port}`);
-        // La llamada a server.start() ya no es necesaria
     });
 };

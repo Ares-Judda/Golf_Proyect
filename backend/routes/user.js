@@ -13,7 +13,7 @@ const {
 
 router.get('/get_all_usuarios', validarJWT, get_all_usuarios); 
 router.post('/save_usuario', save_usuario); 
-router.get('/get_usuario', validarJWT, get_usuario); 
+router.get('/get_usuario/:userId', validarJWT, get_usuario);
 router.put('/update_usuario', validarJWT, update_usuario_body); 
 router.get('/logout', logout_usuario);
 router.post('/upload_image', upload.single('profileImage'), (req, res) => {

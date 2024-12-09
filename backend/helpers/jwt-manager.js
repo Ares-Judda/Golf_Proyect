@@ -3,8 +3,8 @@ const jwt = require('jsonwebtoken');
 const connection = require('../models/database');
 
 class JWTManager {
-    static secretKey = crypto.randomBytes(32).toString('hex');
-    static tokenExpiration = 20;
+    static secretKey = crypto.randomBytes(32).toString('hex');  // Clave secreta para la firma de los tokens
+    static tokenExpiration = 20;  // Tiempo de expiración del token en segundos
 
     /**
      * Genera un token JWT para un usuario y lo guarda en la base de datos.
@@ -13,7 +13,7 @@ class JWTManager {
      */
     static async generateToken(uid) {
         const token = jwt.sign({ uid }, this.secretKey, { expiresIn: this.tokenExpiration });
-        await this.updateUserTokenInDB(uid, token);
+        await this.updateUserTokenInDB(uid, token);  // Guardar el token en la base de datos
         return token;
     }
 
@@ -24,15 +24,16 @@ class JWTManager {
      */
     static async verifyToken(uid) {
         try {
-            const token = await this.getUserTokenFromDB(uid);
+            const token = await this.getUserTokenFromDB(uid);  // Obtener el token de la base de datos
             if (!token) return null;
+
             try {
-                const decoded = jwt.verify(token, this.secretKey);
-                return decoded.uid; 
+                const decoded = jwt.verify(token, this.secretKey);  // Verificar el token
+                return decoded.uid;  // Si el token es válido, devolver el UID
             } catch (err) {
                 if (err.name === 'TokenExpiredError') {
                     console.log('Token expirado, generando uno nuevo...');
-                    const newToken = await this.generateToken(uid); 
+                    const newToken = await this.generateToken(uid);  // Si el token está expirado, generar uno nuevo
                     console.log("\nEl nuevo token es:", newToken);
                     return newToken;
                 } else {

@@ -65,35 +65,48 @@ const save_usuario = async (req, res = response) => {
  * @param {*} req - La solicitud HTTP, sin requerir ID en el cuerpo.
  * @param {*} res - La respuesta HTTP con los datos del usuario encontrado o un mensaje de error.
  */
-const get_usuario = async (req, res = response) => {
+const get_usuario = async (req, res) => {
+    const { userId } = req.params;  // Obtener el userId de los parámetros de la URL
+
     try {
-        const idUser = Object.keys(userTokenManager.users)[0];
-        if (!idUser) {
-            return res.status(400).json({ mensaje: 'Se requiere un ID' });
+        if (!userId) {
+            return res.status(400).json({ mensaje: 'Se requiere un ID de usuario' });
         }
 
+        // Llamar a la función que realiza la consulta a la base de datos
+        const usuario = await get_usuario_from_db(userId);
+
+        if (!usuario) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+        }
+
+        res.status(200).json(usuario);  // Responder con los datos del usuario
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensaje: 'Error en el servidor' });
+    }
+};
+
+const get_usuario_from_db = async (userId) => {
+    return new Promise((resolve, reject) => {
         connection.query(
             `SELECT u.email, u.role, u.imagen, u.username, 
                     c.name, c.lastname, c.cellphone, c.datebirth, c.address, c.zipcode
              FROM golfdb.user AS u
              INNER JOIN golfdb.client AS c ON u.ID_User = c.ID_User
              WHERE u.ID_User = ?`,
-            [idUser],
+            [userId], // Pasamos el userId aquí
             (err, results) => {
                 if (err) {
-                    console.error('Error al buscar usuario por ID:', err);
-                    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+                    reject('Error al buscar usuario por ID');
                 }
                 if (results.length === 0) {
-                    return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+                    reject('Usuario no encontrado');
                 }
-                res.json(results[0]);
+                resolve(results[0]); // Retornamos los datos del usuario
             }
         );
-    } catch (error) {
-        console.error('Error al buscar usuario por ID:', error);
-        res.status(500).json({ mensaje: 'Error interno del servidor' });
-    }
+    });
 };
 
 
@@ -105,7 +118,7 @@ const get_usuario = async (req, res = response) => {
  */
 const update_usuario_body = async (req, res = response) => {
     try {
-        const idUser = Object.keys(userTokenManager.users)[0];
+        const idUser = req.userId;
         const { actualizaciones } = req.body;
         if (!idUser) {
             return res.status(400).json({ mensaje: 'ID de usuario no proporcionado' });
@@ -152,7 +165,7 @@ const update_usuario_body = async (req, res = response) => {
  */
 const logout_usuario = (req, res = response) => {
     try {
-        const idUser = Object.keys(userTokenManager.users)[0]; 
+        const idUser = req.userId;
         if (!idUser) {
             return res.status(400).json({ mensaje: 'No hay usuario activo para cerrar sesión' });
         }
