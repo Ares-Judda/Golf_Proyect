@@ -20,6 +20,8 @@ class Server {
     routes() {
         this.app.use('/api/usuarios', require('../routes/user'));  // Ruta para usuarios
         this.app.use('/api/auth', require('../routes/auth'));      // Ruta para autenticación
+        this.app.use('/api/clothes', require('../routes/clothes')); // Ruta para articulos
+        this.app.use('/api/sales', require('../routes/sales')); // Ruta para ventas
     }
 
     listen (){
