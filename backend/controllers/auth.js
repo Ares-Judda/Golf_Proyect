@@ -1,47 +1,50 @@
-const { response } = require('express');
 const connection = require('../models/database');
 const userTokenManager = require('../helpers/user-token-manager');
 const bcrypt = require('bcrypt');
 const jwtManager = require('../helpers/jwt-manager');
 
-const login = async (req, res = response) => {
+const login = async (email, password) => {
     try {
-        const { email, password } = req.body;
         console.log(`\nEl usuario ${email} se está intentando loguear...`);
-        connection.query('SELECT * FROM user WHERE email = ?', [email], async (err, results) => {
-            if (err) {
-                console.error('Error en la consulta MySQL:', err);
-                return res.status(500).json({ mensaje: 'Error interno en el servidor' });
-            }
-            if (results.length === 0) {
-                console.log('Usuario no encontrado');
-                return res.status(401).json({ mensaje: 'Credenciales inválidas' });
-            }
-            const usuario = results[0];
-            const passwordMatch = await verifyPassword(password, usuario.password);
-            if (!passwordMatch) {
-                return res.status(401).json({ mensaje: 'Credenciales inválidas' });
-            }
-            const token = await jwtManager.generateToken(usuario.ID_User);
-            userTokenManager.addUser(email, usuario.ID_User);
-            res.header('x-token', token); 
-            console.log(`Token enviado en el header: ${token}`);
-            res.json({
-                idUser: usuario.ID_User,
-                email: usuario.email,
-                role: usuario.role
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT * FROM user WHERE email = ?', [email], async (err, results) => {
+                if (err) {
+                    console.error('Error en la consulta MySQL:', err);
+                    return reject({ mensaje: 'Error interno en el servidor' });
+                }
+                if (results.length === 0) {
+                    console.log('Usuario no encontrado');
+                    return reject({ mensaje: 'Credenciales inválidas' });
+                }
+                const usuario = results[0];
+                try {
+                    const passwordMatch = await verifyPassword(password, usuario.password);
+                    if (!passwordMatch) {
+                        return reject({ mensaje: 'Credenciales inválidas' });
+                    }
+                    const token = await jwtManager.generateToken(usuario.ID_User);
+                    userTokenManager.addUser(email, usuario.ID_User);
+                    resolve({
+                        token,           // Retorna el token
+                        idUser: usuario.ID_User,
+                        email: usuario.email,
+                        role: usuario.role
+                    });
+                } catch (error) {
+                    console.error('Error al verificar la contraseña:', error);
+                    return reject({ mensaje: 'Error interno en el servidor' });
+                }
             });
         });
     } catch (error) {
         console.error('Error en el logueo de usuario', error);
-        res.status(500).json({ mensaje: 'Error interno en el servidor' });
+        throw new Error('Error interno en el servidor');
     }
 };
 
 async function verifyPassword(password, hashedPassword) {
     const isMatch = await bcrypt.compare(password, hashedPassword);
     return isMatch;
-    
 }
 
 module.exports = { login };

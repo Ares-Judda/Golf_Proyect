@@ -5,7 +5,8 @@ const connection = require('./database');
 const path = require('path');
 const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
-const grpcServer = require('../services/userService'); 
+const grpcServerUser = require('../services/userService'); 
+const grpcServerAuth = require('../services/authService'); 
 const upload = require('../helpers/multerConfig');
 
 class Server {
@@ -16,7 +17,8 @@ class Server {
         this.middlewares();
         this.routes();
         this.setupSwagger();
-        grpcServer.start();  
+        grpcServerUser.start(); 
+        grpcServerAuth.start(); 
     }  
 
     middlewares() {
