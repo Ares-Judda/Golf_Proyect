@@ -46,11 +46,11 @@ server.addService(proto.AuthService.service, {
 
 // Iniciar el servidor
 module.exports.start = () => {
-    server.bindAsync('192.168.1.73:50051', grpc.ServerCredentials.createInsecure(), (error, port) => {
+    server.bindAsync('192.168.1.67:50051', grpc.ServerCredentials.createInsecure(), (error, port) => {
         if (error) {
             console.error(`Error al iniciar el servidor gRPC: ${error.message}`);
             return;
         }
-        console.log(`gRPC Server corriendo en http://192.168.1.73:${port}`);
+        console.log(`gRPC Server corriendo en http://192.168.1.67:${port}`);
     });
 };
