@@ -1,6 +1,6 @@
 const { response } = require('express');
-const connection = require('../models/database');
-const userTokenManager = require('../helpers/user-token-manager'); 
+const connection = require('../../business/models/database');
+const userTokenManager = require('../../business/helpers/user-token-manager'); 
 
 /**
  * Obtiene lista de todas las ventas de la base de datos.

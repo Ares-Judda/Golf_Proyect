@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const connection = require('./database');
+const connection = require('../../business/models/database');
 const path = require('path');
 const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
@@ -34,14 +34,12 @@ class Server {
     routes() {
         this.app.use('/api/usuarios', require('../../services/routesRest/user'));
         this.app.use('/api/images', require('../../services/routesRest/images'));
+        this.app.use('/api/clothes', require('../../services/routesRest/clothes'));
+        this.app.use('/api/clothes', require('../../services/routesRest/sales'));
     }
 
     setupSwagger() {
         this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(this.swaggerDocument));
-        this.app.use('/api/usuarios', require('../routes/user'));  // Ruta para usuarios
-        this.app.use('/api/auth', require('../routes/auth'));      // Ruta para autenticación
-        this.app.use('/api/clothes', require('../routes/clothes')); // Ruta para articulos
-        this.app.use('/api/sales', require('../routes/sales')); // Ruta para ventas
     }
 
     listen() {
