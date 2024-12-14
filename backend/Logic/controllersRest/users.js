@@ -1,8 +1,8 @@
 const { response } = require('express');
-const connection = require('../models/database');
-const userTokenManager = require('../helpers/user-token-manager'); 
+const connection = require('../../business/models/database');
+const userTokenManager = require('../../business/helpers/user-token-manager'); 
 const bcrypt = require('bcrypt');
-const upload = require('../helpers/multerConfig');
+const upload = require('../../business/helpers/multerConfig');
 
 /**
  * Obtiene la lista de todos los usuarios de la base de datos.
@@ -66,21 +66,17 @@ const save_usuario = async (req, res = response) => {
  * @param {*} res - La respuesta HTTP con los datos del usuario encontrado o un mensaje de error.
  */
 const get_usuario = async (req, res) => {
-    const { userId } = req.params;  // Obtener el userId de los parámetros de la URL
-
+    const { userId } = req.params; 
     try {
         if (!userId) {
             return res.status(400).json({ mensaje: 'Se requiere un ID de usuario' });
         }
-
-        // Llamar a la función que realiza la consulta a la base de datos
         const usuario = await get_usuario_from_db(userId);
 
         if (!usuario) {
             return res.status(404).json({ mensaje: 'Usuario no encontrado' });
         }
-
-        res.status(200).json(usuario);  // Responder con los datos del usuario
+        res.status(200).json(usuario);
     } catch (error) {
         console.error(error);
         res.status(500).json({ mensaje: 'Error en el servidor' });
@@ -89,13 +85,20 @@ const get_usuario = async (req, res) => {
 
 const get_usuario_from_db = async (userId) => {
     return new Promise((resolve, reject) => {
+        console.log(userId);
         connection.query(
             `SELECT u.email, u.role, u.imagen, u.username, 
-                    c.name, c.lastname, c.cellphone, c.datebirth, c.address, c.zipcode
-             FROM golfdb.user AS u
-             INNER JOIN golfdb.client AS c ON u.ID_User = c.ID_User
-             WHERE u.ID_User = ?`,
-            [userId], // Pasamos el userId aquí
+                    COALESCE(c.name, s.name) AS name,
+                    COALESCE(c.lastname, s.lastname) AS lastname,
+                    COALESCE(c.cellphone, s.cellphone) AS cellphone,
+                    COALESCE(c.datebirth, s.datebirth) AS datebirth,
+                    COALESCE(c.address, s.address) AS address,
+                    COALESCE(c.zipcode, s.zipcode) AS zipcode
+                FROM golfdb.user AS u
+                LEFT JOIN golfdb.client AS c ON u.ID_User = c.ID_User
+                LEFT JOIN golfdb.selling AS s ON u.ID_User = s.ID_User
+                WHERE u.ID_User = ?`,
+            [userId],
             (err, results) => {
                 if (err) {
                     reject('Error al buscar usuario por ID');
@@ -103,7 +106,7 @@ const get_usuario_from_db = async (userId) => {
                 if (results.length === 0) {
                     reject('Usuario no encontrado');
                 }
-                resolve(results[0]); // Retornamos los datos del usuario
+                resolve(results[0]); 
             }
         );
     });

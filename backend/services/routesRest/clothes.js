@@ -1,5 +1,5 @@
 const express = require('express');
-const { validarJWT } = require('../helpers/validar-jwt');
+const { validarJWT } = require('../../helpers/validar-jwt');
 const router = express.Router();
 const {
     get_all_articulos, 
