@@ -1,7 +1,7 @@
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
-const { get_all_usuarios, save_usuario, get_usuario, update_usuario_body, logout_usuario } = require('../controllers/users');
+const { get_all_usuarios, save_usuario, get_usuario, update_usuario_body, logout_usuario } = require('../../Logic/controllersGpc/users');
 const packageDefinition = protoLoader.loadSync(path.join(__dirname, '../protos/user.proto'));
 const grpcObject = grpc.loadPackageDefinition(packageDefinition);
 const UserService = grpcObject.UserService;

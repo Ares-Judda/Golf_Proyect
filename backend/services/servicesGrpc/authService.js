@@ -1,7 +1,7 @@
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
-const { login } = require('../controllers/auth'); // Asegúrate de importar la función correctamente
+const { login } = require('../../Logic/controllersGpc/auth'); // Asegúrate de importar la función correctamente
 
 const packageDefinition = protoLoader.loadSync(path.join(__dirname, '../protos/auth.proto'));
 const proto = grpc.loadPackageDefinition(packageDefinition);

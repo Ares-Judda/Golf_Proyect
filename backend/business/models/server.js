@@ -5,9 +5,8 @@ const connection = require('./database');
 const path = require('path');
 const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
-const grpcServerUser = require('../services/userService'); 
-const grpcServerAuth = require('../services/authService'); 
-const upload = require('../helpers/multerConfig');
+const grpcServerUser = require('../../services/servicesGrpc/userService');
+const grpcServerAuth = require('../../services/servicesGrpc/authService');
 
 class Server {
     constructor() {
@@ -17,34 +16,33 @@ class Server {
         this.middlewares();
         this.routes();
         this.setupSwagger();
-        grpcServerUser.start(); 
-        grpcServerAuth.start(); 
-    }  
+        grpcServerUser.start();
+        grpcServerAuth.start();
+    }
 
     middlewares() {
         this.app.use(cors({
-            origin: '*', 
-            methods: ['GET', 'POST', 'PUT', 'DELETE'], 
-            allowedHeaders: ['Content-Type', 'Authorization'], 
+            origin: '*',
+            methods: ['GET', 'POST', 'PUT', 'DELETE'],
+            allowedHeaders: ['Content-Type', 'Authorization'],
         }));
-        this.app.use(express.json());  
+        this.app.use(express.json());
         this.app.use(express.static('public'));
         this.app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
-
-    }   
+    }
 
     routes() {
-        this.app.use('/api/usuarios', require('../routes/user'));  
-        this.app.use('/api/auth', require('../routes/auth'));     
+        this.app.use('/api/usuarios', require('../../services/routesRest/user'));
+        this.app.use('/api/images', require('../../services/routesRest/images'));
     }
 
     setupSwagger() {
         this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(this.swaggerDocument));
     }
 
-    listen (){
-        this.app.listen(this.port, () =>{
-            console.log(`Server listening on port ${this.port}`)
+    listen() {
+        this.app.listen(this.port, () => {
+            console.log(`Server listening on port ${this.port}`);
             console.log(`Documentación Swagger disponible en http://localhost:${this.port}/api-docs`);
         });
     }

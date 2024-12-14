@@ -1,8 +1,8 @@
 const { response } = require('express');
-const connection = require('../models/database');
-const userTokenManager = require('../helpers/user-token-manager'); 
+const connection = require('../../business/models/database');
+const userTokenManager = require('../../business/helpers/user-token-manager'); 
 const bcrypt = require('bcrypt');
-const upload = require('../helpers/multerConfig');
+const upload = require('../../business/helpers/multerConfig');
 
 /**
  * Obtiene la lista de todos los usuarios de la base de datos.
@@ -85,12 +85,19 @@ const get_usuario = async (req, res) => {
 
 const get_usuario_from_db = async (userId) => {
     return new Promise((resolve, reject) => {
+        console.log(userId);
         connection.query(
             `SELECT u.email, u.role, u.imagen, u.username, 
-                    c.name, c.lastname, c.cellphone, c.datebirth, c.address, c.zipcode
-             FROM golfdb.user AS u
-             INNER JOIN golfdb.client AS c ON u.ID_User = c.ID_User
-             WHERE u.ID_User = ?`,
+                    COALESCE(c.name, s.name) AS name,
+                    COALESCE(c.lastname, s.lastname) AS lastname,
+                    COALESCE(c.cellphone, s.cellphone) AS cellphone,
+                    COALESCE(c.datebirth, s.datebirth) AS datebirth,
+                    COALESCE(c.address, s.address) AS address,
+                    COALESCE(c.zipcode, s.zipcode) AS zipcode
+                FROM golfdb.user AS u
+                LEFT JOIN golfdb.client AS c ON u.ID_User = c.ID_User
+                LEFT JOIN golfdb.selling AS s ON u.ID_User = s.ID_User
+                WHERE u.ID_User = ?`,
             [userId],
             (err, results) => {
                 if (err) {

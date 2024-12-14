@@ -1,7 +1,7 @@
-const connection = require('../models/database');
-const userTokenManager = require('../helpers/user-token-manager');
+const connection = require('../../business/models/database');
+const userTokenManager = require('../../business/helpers/user-token-manager');
 const bcrypt = require('bcrypt');
-const jwtManager = require('../helpers/jwt-manager');
+const jwtManager = require('../../business/helpers/jwt-manager');
 
 const login = async (email, password) => {
     try {
