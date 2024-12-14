@@ -1,5 +1,5 @@
 const express = require('express');
-const { validarJWT } = require('../../helpers/validar-jwt');
+const { validarJWT } = require('../../business/helpers/validar-jwt');
 const router = express.Router();
 const {
     get_all_articulos, 
@@ -8,9 +8,8 @@ const {
     save_article, 
     update_articulo_body,
     delete_articulo
-} = require('../controllers/clothes');
+} = require('../../Logic/controllersRest/clothes');
 
-//Falta validacion de credenciales
 router.get('/get_all_articulos',  get_all_articulos); 
 router.get('/get_articulos_by_selling',  get_articulos_by_selling);
 router.get('/get_articulo_by_name',  get_articulo_by_name); 
