@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+service UserService {
+    rpc GetAllUsuarios (Empty) returns (UsuarioList);
+    rpc SaveUsuario (SaveUsuarioRequest) returns (SaveUsuarioResponse);
+    rpc GetUsuario (GetUsuarioRequest) returns (Usuario);
+    rpc UpdateUsuario (UpdateUsuarioRequest) returns (UpdateUsuarioResponse);
+    rpc LogoutUsuario (LogoutUsuarioRequest) returns (LogoutUsuarioResponse);
+}
+
+message Empty {}
+
+message Usuario {
+    string email = 1;
+    string role = 2;
+    string imagen = 3;
+    string username = 4;
+    string name = 5;
+    string lastname = 6;
+    string cellphone = 7;
+    string datebirth = 8;
+    string address = 9;
+    string zipcode = 10;
+}
+
+message UsuarioList {
+    repeated Usuario usuarios = 1;
+}
+
+message SaveUsuarioRequest {
+    string email = 1;
+    string role = 2;
+    string password = 3;
+    string imagen = 4;
+    string name = 5;
+    string lastname = 6;
+    string username = 7;
+}
+
+message SaveUsuarioResponse {
+    string mensaje = 1;
+}
+
+message GetUsuarioRequest {
+    string idUser = 1;
+}
+
+message UpdateUsuarioRequest {
+    string idUser = 1;
+    string email = 2;
+    string username = 3;
+    string imagen = 4;
+}
+
+message UpdateUsuarioResponse {
+    string mensaje = 1;
+}
+
+message LogoutUsuarioRequest {
+    string idUser = 1;
+}
+
+message LogoutUsuarioResponse {
+    string mensaje = 1;
+}
