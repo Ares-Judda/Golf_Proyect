@@ -230,5 +230,5 @@ module.exports = {
     get_articulos_by_selling,
     get_articulo_by_name,
     update_articulo_body,
-    delete_articulo
+    delete_articulo,
 };
