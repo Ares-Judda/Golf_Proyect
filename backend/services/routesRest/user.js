@@ -14,7 +14,7 @@ const {
 router.get('/get_all_usuarios', validarJWT, get_all_usuarios); 
 router.post('/save_usuario', save_usuario); 
 router.get('/get_usuario/:userId', validarJWT, get_usuario);
-router.put('/update_usuario', validarJWT, update_usuario_body); 
+router.put('/update_usuario/:userId', validarJWT, update_usuario_body); 
 router.get('/logout', logout_usuario);
 
 module.exports = router;

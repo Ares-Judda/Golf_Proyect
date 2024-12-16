@@ -120,20 +120,14 @@ const get_usuario_from_db = async (userId) => {
  * @param {*} res - La respuesta HTTP que contiene el resultado de la operación o un mensaje de error.
  */
 const update_usuario_body = async (req, res = response) => {
+    const { userId } = req.params;
     try {
-        const idUser = req.userId;
         const { actualizaciones } = req.body;
-        if (!idUser) {
+        if (!userId) {
             return res.status(400).json({ mensaje: 'ID de usuario no proporcionado' });
         }
         if (!actualizaciones || Object.keys(actualizaciones).length === 0) {
             return res.status(400).json({ mensaje: 'No se proporcionaron campos a actualizar' });
-        }
-        if (actualizaciones.username) {
-            const existUserName = await userNameExist(actualizaciones.username);
-            if (existUserName) {
-                return res.status(400).json({ error: 'El nombre de usuario ya está registrado' });
-            }
         }
         const userFields = ['email', 'role', 'imagen', 'username'];
         const userUpdates = {};
@@ -146,12 +140,12 @@ const update_usuario_body = async (req, res = response) => {
             }
         });
         if (Object.keys(userUpdates).length > 0) {
-            await updateTable('user', userUpdates, idUser);
+            await updateTable('user', userUpdates, userId);
         }
-        const role = await getUserRole(idUser);
+        const role = await getUserRole(userId);
         const tablaEspecifica = role === 'CLIENT_ROLE' ? 'client' : 'seller';
         if (Object.keys(roleSpecificUpdates).length > 0) {
-            await updateTable(tablaEspecifica, roleSpecificUpdates, idUser);
+            await updateTable(tablaEspecifica, roleSpecificUpdates, userId);
         }
         res.json({ mensaje: 'Usuario actualizado exitosamente' });
     } catch (error) {

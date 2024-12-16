@@ -35,7 +35,8 @@ class Server {
         this.app.use('/api/usuarios', require('../../services/routesRest/user'));
         this.app.use('/api/images', require('../../services/routesRest/images'));
         this.app.use('/api/clothes', require('../../services/routesRest/clothes'));
-        this.app.use('/api/clothes', require('../../services/routesRest/sales'));
+        this.app.use('/api/sales', require('../../services/routesRest/sales'));
+        this.app.use('/api/shoppingCar', require('../../services/routesRest/shoppingCar'));
     }
 
     setupSwagger() {
