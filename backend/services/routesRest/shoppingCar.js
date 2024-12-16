@@ -4,7 +4,7 @@ const router = express.Router();
 const {
     add_articulo_to_car,
     get_shopping_car
-} = require('../../Logic/controllersRest/shoppingCar');
+} = require('../../Logic/controllersRest/shoppingCar.js');
 
 router.post('/add_articulo_to_car/:userId', validarJWT, add_articulo_to_car);
 router.get('/get_shopping_car/:userId', validarJWT, get_shopping_car);
