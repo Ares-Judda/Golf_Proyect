@@ -86,8 +86,91 @@ const get_shopping_car_from_db = async (userId) => {
     });
 };
 
+const update_quantity = async (req, res) => {
+    const { userId } = req.params;
+    const { ID_Clothes, newQuantity } = req.body;
+
+    if (!userId || !ID_Clothes || newQuantity == null) {
+        return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+
+    try {
+        const response = await update_quantity_in_cart(userId, ID_Clothes, newQuantity);
+
+        if (!response.success) {
+            return res.status(404).json({ error: response.message });
+        }
+
+        res.status(200).json({ message: response.message });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+};
+
+const update_quantity_in_cart = async (userId, clothesId, newQuantity) => {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            `UPDATE cart 
+             SET quantity = ? 
+             WHERE ID_Client = ? AND ID_Clothes = ?`,
+            [newQuantity, userId, clothesId],
+            (err, result) => {
+                if (err) {
+                    console.error('Error al actualizar la cantidad en el carrito:', err);
+                    reject({ message: 'Error al actualizar la cantidad', error: err });
+                } else if (result.affectedRows === 0) {
+                    resolve({ message: 'No se encontró el artículo para actualizar' });
+                } else {
+                    resolve({ message: 'Cantidad actualizada exitosamente' });
+                }
+            }
+        );
+    });
+};
+
+const delete_from_car = async (req, res) => {
+    const { userId } = req.params;
+    const { ID_Clothes } = req.body;
+
+    if (!userId || !ID_Clothes) {
+        return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+
+    try {
+        const response = await remove_from_cart(userId, ID_Clothes);
+
+        res.status(200).json(response);
+    } catch (error) {
+        console.error('Error interno del servidor:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+};
+
+const remove_from_cart = async (userId, clothesId) => {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            `UPDATE cart 
+             SET available = 0 
+             WHERE ID_Client = ? AND ID_Clothes = ?`,
+            [userId, clothesId],
+            (err, result) => {
+                if (err) {
+                    console.error('Error al eliminar el artículo del carrito:', err);
+                    reject({ message: 'Error al eliminar el artículo', error: err });
+                } else if (result.affectedRows === 0) {
+                    resolve({ message: 'No se encontró el artículo para eliminar' });
+                } else {
+                    resolve({ message: 'Artículo eliminado del carrito exitosamente' });
+                }
+            }
+        );
+    });
+};
 
 module.exports = {
     add_articulo_to_car,
-    get_shopping_car
+    get_shopping_car,
+    update_quantity,
+    delete_from_car
 };
