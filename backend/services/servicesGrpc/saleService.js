@@ -1,0 +1,46 @@
+const grpc = require('@grpc/grpc-js');
+const protoLoader = require('@grpc/proto-loader');
+const path = require('path');
+const { getAllVentas } = require('../../Logic/controllersGpc/sales');
+
+const packageDefinition = protoLoader.loadSync(path.join(__dirname, '../protos/sales.proto'));
+const proto = grpc.loadPackageDefinition(packageDefinition);
+
+const server = new grpc.Server();
+
+server.addService(proto.VentasService.service, {
+    GetAllVentas: (call, callback) => { 
+        try {
+            getAllVentas(call, (error, response) => {  
+                if (error) {
+                    console.error("Error al obtener ventas:", error);
+                    callback({
+                        code: grpc.status.INTERNAL,
+                        details: "Error al obtener las ventas"
+                    });
+                } else {
+                    callback(null, { ventas: response.ventas });
+                }
+            });
+        } catch (error) {
+            console.error("Error al procesar la solicitud:", error);
+            callback({
+                code: grpc.status.INTERNAL,
+                details: "Error inesperado en el servidor"
+            });
+        }
+    }
+});
+
+
+// Exportar una función que inicie el servidor
+// CAMBIAR DIRECCION SI ES NECESARIO
+module.exports.start = () => {
+    server.bindAsync('127.0.0.1:50051', grpc.ServerCredentials.createInsecure(), (error, port) => {
+        if (error) {
+            console.error(`Error al iniciar el servidor gRPC: ${error.message}`);
+            return;
+        }
+        console.log(`gRPC Server corriendo en http://127.0.0.1:${port}`);
+    });
+};

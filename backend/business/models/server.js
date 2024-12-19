@@ -7,6 +7,8 @@ const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
 const grpcServerUser = require('../../services/servicesGrpc/userService');
 const grpcServerAuth = require('../../services/servicesGrpc/authService');
+const grpcServerClothes = require('../../services/servicesGrpc/clothesService');
+const grpcServerSales = require('../../services/servicesGrpc/saleService');
 
 class Server {
     constructor() {
@@ -18,6 +20,8 @@ class Server {
         this.setupSwagger();
         grpcServerUser.start();
         grpcServerAuth.start();
+        grpcServerClothes.start();
+        grpcServerSales.start();
     }
 
     middlewares() {
