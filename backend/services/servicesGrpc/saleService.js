@@ -11,7 +11,14 @@ const server = new grpc.Server();
 server.addService(proto.VentasService.service, {
     GetAllVentas: (call, callback) => { 
         try {
-            getAllVentas(call, (error, response) => {  
+            const { ID_Selling, InitialDate, CutDate } = call.request;
+            if (!ID_Selling && !InitialDate && !CutDate) {
+                return callback({
+                    code: grpc.status.INVALID_ARGUMENT,
+                    details: "El ID del vendedor y las fechas no fueron proporcionados en servicio"
+                });
+            }
+            getAllVentas(ID_Selling, InitialDate, CutDate, (error, response) => {  
                 if (error) {
                     console.error("Error al obtener ventas:", error);
                     callback({
@@ -36,11 +43,11 @@ server.addService(proto.VentasService.service, {
 // Exportar una función que inicie el servidor
 // CAMBIAR DIRECCION SI ES NECESARIO
 module.exports.start = () => {
-    server.bindAsync('127.0.0.1:50051', grpc.ServerCredentials.createInsecure(), (error, port) => {
+    server.bindAsync('192.168.1.75:50052', grpc.ServerCredentials.createInsecure(), (error, port) => {
         if (error) {
             console.error(`Error al iniciar el servidor gRPC: ${error.message}`);
             return;
         }
-        console.log(`gRPC Server corriendo en http://127.0.0.1:${port}`);
+        console.log(`gRPC Server corriendo en http://192.168.1.75:${port}`);
     });
 };
