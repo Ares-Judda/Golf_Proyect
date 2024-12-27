@@ -1,18 +1,19 @@
 syntax = "proto3";
 
 service ArticulosService {
-    rpc GetAllArticulos (Empty) returns (ArticulosResponse);
+    rpc GetAllArticulos (EmptyRequest) returns (ArticulosResponse);
     rpc GetArticulosBySelling (SellingRequest) returns (ArticulosResponse);
     rpc SaveArticulo (SaveArticuloRequest) returns (SaveArticuloResponse);
     rpc DeleteArticulo (DeleteArticuloRequest) returns (DeleteArticuloResponse);
     rpc UpdateArticulo (UpdateArticuloRequest) returns (UpdateArticuloResponse);
     rpc GetArticuloByName (GetArticuloByNameRequest) returns (ArticulosResponse); 
+    rpc GetArticuloByCategory (GetArticuloByCategoryRequest) returns (ArticulosResponse); 
 }
 
-message Empty {}
+message EmptyRequest {}
 
 message SellingRequest {
-    string ID_Selling = 1; 
+    string ID_Selling = 1;
 }
 
 message Articulo {
@@ -34,6 +35,7 @@ message SaveArticuloRequest {
     int32 price = 3;
     string size = 4;
     int32 quota = 5;
+    string ID_Selling = 6;
 }
 
 message SaveArticuloResponse {  
@@ -48,15 +50,19 @@ message DeleteArticuloResponse {
     string mensaje = 1;  
 }
 
-message UpdateArticuloRequest {  // Solicitud de actualización de artículo
-    int32 ID_Clothes = 1;  // ID del artículo a actualizar
-    map<string, string> actualizaciones = 2;  // Campos a actualizar en el artículo
+message UpdateArticuloRequest {  
+    int32 ID_Clothes = 1;  
+    map<string, string> actualizaciones = 2;  
 }
 
-message UpdateArticuloResponse {  // Respuesta de actualización
-    string mensaje = 1;  // Mensaje de éxito o error
+message UpdateArticuloResponse {  
+    string mensaje = 1;  
 }
 
 message GetArticuloByNameRequest {
-    string name = 1;  // Nombre del artículo a buscar
+    string name = 1;  
+}
+
+message GetArticuloByCategoryRequest {
+    string clothecategory = 1;  
 }

@@ -1,7 +1,7 @@
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
-const { getAllArticulos, getArticulosBySelling, saveArticulo, deleteArticulo, update_articulo, getArticleByName} = require('../../Logic/controllersGpc/clothes');
+const { getAllArticulos, getArticulosBySelling, saveArticulo, deleteArticulo, update_articulo, getArticleByName, getArticleByCategory} = require('../../Logic/controllersGpc/clothes');
 
 const packageDefinition = protoLoader.loadSync(path.join(__dirname, '../protos/clothes.proto'));
 const proto = grpc.loadPackageDefinition(packageDefinition);
@@ -61,16 +61,16 @@ server.addService(proto.ArticulosService.service, {
     },
     SaveArticulo: (call, callback) => {
         try {
-            const { name, clothecategory, price, size, quota } = call.request;
+            const { name, clothecategory, price, size, quota, ID_Selling } = call.request;
     
-            if (!name || !clothecategory || !price || !size || !quota) {
+            if (!name || !clothecategory || !price || !size || !quota || !ID_Selling) {
                 return callback({
                     code: grpc.status.INVALID_ARGUMENT,
                     details: 'Faltan campos obligatorios'
                 });
             }
     
-            saveArticulo(name, clothecategory, price, size, quota, (error, response) => {
+            saveArticulo(name, clothecategory, price, size, quota, ID_Selling, (error, response) => {
                 if (error) {
                     console.error("Error al guardar el artículo:", error);
                     callback({
@@ -155,7 +155,30 @@ server.addService(proto.ArticulosService.service, {
                 details: "Error inesperado en el servidor"
             });
         }
-    }  
+    },
+    GetArticuloByCategory: (call, callback) => {
+        try {
+            const { clothecategory } = call.request; 
+    
+            getArticleByCategory(clothecategory, (error, response) => {
+                if (error) {
+                    console.error("Error al obtener artículo(s) por categoría:", error);
+                    callback({
+                        code: grpc.status.INTERNAL,
+                        details: error.details || "Error interno del servidor"
+                    });
+                } else {
+                    callback(null, { articulos: response.articulos });
+                }
+            });
+        } catch (error) {
+            console.error("Error en la solicitud:", error);
+            callback({
+                code: grpc.status.INTERNAL,
+                details: "Error inesperado en el servidor"
+            });
+        }
+    }   
 });
 
 // Exportar una función que inicie el servidor
