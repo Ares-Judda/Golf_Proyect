@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+service VentasService {
+    rpc GetAllVentas (VentasRequest) returns (VentasResponse);
+}
+
+message VentasRequest {
+    string ID_Selling = 1; 
+    string InitialDate = 2;
+    string CutDate = 3; 
+}
+
+message Venta {
+    int32 ID_Purchase = 1; 
+    string ID_Client = 2;          
+    int32 ID_Clothes = 3;     
+    int32 quantity = 4; 
+    string fecha = 5;
+    string name = 6;   
+    int32 priceArticle = 7;
+    string nameSelling = 8;   
+}
+
+message VentasResponse {
+    repeated Venta ventas = 1; 
+}
