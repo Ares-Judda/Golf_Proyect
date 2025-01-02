@@ -61,7 +61,8 @@ const get_shopping_car_from_db = async (userId) => {
                 cl.name, 
                 cl.size, 
                 cl.price, 
-                cl.quota 
+                cl.quota,
+                cl.ID_Clothes 
             FROM 
                 cart AS cr
             INNER JOIN 
@@ -79,7 +80,7 @@ const get_shopping_car_from_db = async (userId) => {
                 } else if (results.length === 0) {
                     resolve({ message: 'No hay artículos en el carrito o todos están no disponibles' });
                 } else {
-                    resolve(results);  // Devuelve los resultados de la consulta
+                    resolve(results); 
                 }
             }
         );
@@ -101,10 +102,10 @@ const update_quantity = async (req, res) => {
             return res.status(404).json({ error: response.message });
         }
 
-        res.status(200).json({ message: response.message });
+        return res.status(200).json({ message: response.message });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        return res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -118,12 +119,14 @@ const update_quantity_in_cart = async (userId, clothesId, newQuantity) => {
             (err, result) => {
                 if (err) {
                     console.error('Error al actualizar la cantidad en el carrito:', err);
-                    reject({ message: 'Error al actualizar la cantidad', error: err });
-                } else if (result.affectedRows === 0) {
-                    resolve({ message: 'No se encontró el artículo para actualizar' });
-                } else {
-                    resolve({ message: 'Cantidad actualizada exitosamente' });
+                    return reject({ success: false, message: 'Error al actualizar la cantidad', error: err });
                 }
+
+                if (result.affectedRows === 0) {
+                    return resolve({ success: false, message: 'No se encontró el artículo para actualizar' });
+                }
+
+                return resolve({ success: true, message: 'Cantidad actualizada exitosamente' });
             }
         );
     });
