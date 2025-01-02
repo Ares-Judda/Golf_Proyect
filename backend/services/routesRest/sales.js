@@ -2,10 +2,10 @@ const express = require('express');
 const { validarJWT } = require('../../business/helpers/validar-jwt');
 const router = express.Router();
 const {
-    get_all_ventas
+    buy_shopping_car
 } = require('../../Logic/controllersRest/sales');
 
 
-router.get('/get_all_ventas',  get_all_ventas); //Falta validacion de credenciales
+router.post('/buy_shopping_car/:userId', validarJWT, buy_shopping_car); 
 
 module.exports = router;
