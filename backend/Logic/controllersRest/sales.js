@@ -9,8 +9,6 @@ const buy_shopping_car = async (req, res) => {
 
     try {
         const updatedItems = [];
-
-        // Verificamos la disponibilidad y cantidad de cada artículo
         for (const item of updatedClothes) {
             const clothe = await getClotheInfoFromCart(userId, item.ID_Clothes);
             if (!clothe) {
@@ -51,9 +49,9 @@ const getClotheInfoFromCart = (userId, clothesId) => {
                 console.error('Error al obtener la información de la prenda:', err);
                 reject("Error al obtener la prenda");
             } else if (result.length === 0) {
-                resolve(null);  // Si no se encuentra el artículo, devolvemos null
+                resolve(null); 
             } else {
-                resolve(result[0]);  // Si se encuentra, devolvemos el primer artículo
+                resolve(result[0]);  
             }
         });
     });
@@ -117,6 +115,44 @@ const insertPurchaseHistory = (userId, clothesId, quantity) => {
     });
 };
 
+const get_purchase_history_by_client = async (req, res) => {
+    const { userId } = req.params; 
+    try {
+        if (!userId) {
+            return res.status(400).json({ mensaje: 'El ID del cliente no fue proporcionado.' });
+        }
+        const purchaseItems = await get_purchase_history_by_client_from_db(userId);
+
+        if (purchaseItems.length === 0) {
+            return res.status(404).json({ mensaje: 'No se encontraron artículos para este cliente.' });
+        }
+        res.status(200).json(purchaseItems);
+    } catch (error) {
+        console.error('Error al obtener el historial de compras:', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+    }
+};
+
+const get_purchase_history_by_client_from_db = async (userId) => {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT * 
+            FROM clothes AS c 
+            INNER JOIN purchase_history AS s ON c.ID_Clothes = s.ID_Clothes 
+            WHERE s.ID_Client = ?;
+        `;
+        connection.query(query, [userId], (err, results) => {
+            if (err) {
+                console.error('Error al consultar la base de datos:', err);
+                reject({ message: 'Error al buscar historial de compras', error: err });
+            } else {
+                resolve(results); 
+            }
+        });
+    });
+};
+
 module.exports = {
-    buy_shopping_car
+    buy_shopping_car,
+    get_purchase_history_by_client
 };
