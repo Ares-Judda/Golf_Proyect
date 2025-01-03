@@ -224,6 +224,45 @@ const delete_articulo = async (req, res) => {
     }
 };
 
+const get_inventory_by_selling = async (req, res) => {
+    const { ID_Selling } = req.params; 
+    try {
+        if (!ID_Selling) {
+            return res.status(400).json({ mensaje: 'El ID del vendedor no fue proporcionado.' });
+        }
+        const inventoryItems = await get_inventory_by_selling_from_db(ID_Selling);
+
+        if (inventoryItems.length === 0) {
+            return res.status(404).json({ mensaje: 'No se encontraron artículos relacionados con este vendedor.' });
+        }
+        res.status(200).json(inventoryItems);
+    } catch (error) {
+        console.error('Error al obtener el inventario:', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor.' });
+    }
+};
+
+const get_inventory_by_selling_from_db = async (ID_Selling) => {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT * 
+            FROM clothes AS c 
+            INNER JOIN selling_clothes AS s ON c.ID_Clothes = s.ID_Clothes 
+            WHERE s.ID_Selling = ?;
+        `;
+        connection.query(query, [ID_Selling], (err, results) => {
+            if (err) {
+                console.error('Error al consultar la base de datos:', err);
+                reject({ message: 'Error al buscar artículos relacionados', error: err });
+            } else {
+                resolve(results); 
+            }
+        });
+    });
+};
+
+
+
 module.exports = {
     save_article,
     get_all_articulos,
@@ -231,4 +270,5 @@ module.exports = {
     get_articulo_by_name,
     update_articulo_body,
     delete_articulo,
+    get_inventory_by_selling
 };
