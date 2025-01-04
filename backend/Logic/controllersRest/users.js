@@ -1,7 +1,7 @@
 const { response } = require('express');
 const connection = require('../../business/models/database');
 const userTokenManager = require('../../business/helpers/user-token-manager'); 
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const upload = require('../../business/helpers/multerConfig');
 
 /**

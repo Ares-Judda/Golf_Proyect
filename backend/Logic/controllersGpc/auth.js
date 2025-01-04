@@ -1,6 +1,6 @@
 const connection = require('../../business/models/database');
 const userTokenManager = require('../../business/helpers/user-token-manager');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwtManager = require('../../business/helpers/jwt-manager');
 
 const login = async (email, password) => {
@@ -25,7 +25,7 @@ const login = async (email, password) => {
                     const token = await jwtManager.generateToken(usuario.ID_User);
                     userTokenManager.addUser(email, usuario.ID_User);
                     resolve({
-                        token,           // Retorna el token
+                        token,           
                         idUser: usuario.ID_User,
                         email: usuario.email,
                         role: usuario.role
