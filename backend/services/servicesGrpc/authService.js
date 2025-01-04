@@ -46,7 +46,7 @@ server.addService(proto.AuthService.service, {
 
 // Iniciar el servidor
 module.exports.start = () => {
-    server.bindAsync('localhost:50051', grpc.ServerCredentials.createInsecure(), (error, port) => {
+    server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), (error, port) => {
         if (error) {
             console.error(`Error al iniciar el servidor gRPC: ${error.message}`);
             return;
