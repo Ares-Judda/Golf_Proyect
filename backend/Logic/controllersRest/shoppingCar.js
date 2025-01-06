@@ -62,16 +62,20 @@ const get_shopping_car_from_db = async (userId) => {
                 cl.size, 
                 cl.price, 
                 cl.quota,
-                cl.ID_Clothes 
+                pc.pick AS image
             FROM 
                 cart AS cr
             INNER JOIN 
                 clothes AS cl
             ON 
                 cr.ID_Clothes = cl.ID_Clothes
+            LEFT JOIN 
+                pickclothes AS pc
+            ON 
+                cl.ID_Clothes = pc.ID_Clothes    
             WHERE 
                 cr.ID_Client = ? 
-                AND available = 1`,
+                AND available = 1`,
             [userId],
             (err, results) => {
                 if (err) {
