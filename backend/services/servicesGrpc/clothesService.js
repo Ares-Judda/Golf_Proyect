@@ -1,7 +1,7 @@
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
-const { getAllArticulos, getArticulosBySelling, saveArticulo, deleteArticulo, update_articulo, getArticleByName, getArticleByCategory} = require('../../Logic/controllersGpc/clothes');
+const { getAllArticulos, getArticulosBySelling, getArticlesBySellingAndName, getArticlesBySellingAndCategory,saveArticulo, deleteArticulo, update_articulo, getArticleByName, getArticleByCategory} = require('../../Logic/controllersGpc/clothes');
 
 const packageDefinition = protoLoader.loadSync(path.join(__dirname, '../protos/clothes.proto'));
 const proto = grpc.loadPackageDefinition(packageDefinition);
@@ -59,18 +59,76 @@ server.addService(proto.ArticulosService.service, {
             });
         }
     },
+    GetArticulosBySellingAndName: (call, callback) => {
+        try {
+            const { ID_Selling, name } = call.request;
+            console.log('ID_Sellin servidor: ', ID_Selling);
+            if (!ID_Selling || !name) {
+                return callback({
+                    code: grpc.status.INVALID_ARGUMENT,
+                    details: "El ID del vendedor no fue proporcionado en servicio"
+                });
+            }
+            getArticlesBySellingAndName(ID_Selling, name, (error, response) => {
+                if (error) {
+                    console.error("Error al obtener artículos por vendedor:", error);
+                    callback({
+                        code: grpc.status.INTERNAL,
+                        details: "Error al obtener los artículos por vendedor"
+                    });
+                } else {
+                    callback(null, { articulos: response.articulos });
+                }
+            }); 
+        } catch (error) {
+            console.error("Error al procesar la solicitud:", error);
+            callback({
+                code: grpc.status.INTERNAL,
+                details: "Error inesperado en el servidor"
+            });
+        }
+    },
+    GetArticulosBySellingAndCategory: (call, callback) => {
+        try {
+            const { ID_Selling, clothecategory } = call.request;
+            console.log('ID_Sellin servidor: ', ID_Selling);
+            if (!ID_Selling || !clothecategory) {
+                return callback({
+                    code: grpc.status.INVALID_ARGUMENT,
+                    details: "El ID del vendedor no fue proporcionado en servicio"
+                });
+            }
+            getArticlesBySellingAndCategory(ID_Selling, clothecategory, (error, response) => {
+                if (error) {
+                    console.error("Error al obtener artículos por vendedor:", error);
+                    callback({
+                        code: grpc.status.INTERNAL,
+                        details: "Error al obtener los artículos por vendedor"
+                    });
+                } else {
+                    callback(null, { articulos: response.articulos });
+                }
+            }); 
+        } catch (error) {
+            console.error("Error al procesar la solicitud:", error);
+            callback({
+                code: grpc.status.INTERNAL,
+                details: "Error inesperado en el servidor"
+            });
+        }
+    },
     SaveArticulo: (call, callback) => {
         try {
-            const { name, clothecategory, price, size, quota, ID_Selling } = call.request;
+            const { name, clothecategory, price, size, quota, image, ID_Selling } = call.request;
     
-            if (!name || !clothecategory || !price || !size || !quota || !ID_Selling) {
+            if (!name || !clothecategory || !price || !size || !quota  || !image || !ID_Selling) {
                 return callback({
                     code: grpc.status.INVALID_ARGUMENT,
                     details: 'Faltan campos obligatorios'
                 });
             }
     
-            saveArticulo(name, clothecategory, price, size, quota, ID_Selling, (error, response) => {
+            saveArticulo(name, clothecategory, price, size, quota, ID_Selling, image, (error, response) => {
                 if (error) {
                     console.error("Error al guardar el artículo:", error);
                     callback({
