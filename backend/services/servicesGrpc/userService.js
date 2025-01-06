@@ -103,6 +103,6 @@ module.exports.start = () => {
             console.error(`Error al iniciar el servidor gRPC: ${error.message}`);
             return;
         }
-        console.log(`gRPC Server corriendo en http://localhost:${port}`);
+        console.log(`gRPC Server corriendo en http://0.0.0.0:${port}`);
     });
 };
