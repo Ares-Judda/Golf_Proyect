@@ -242,11 +242,11 @@ server.addService(proto.ArticulosService.service, {
 // Exportar una función que inicie el servidor
 // CAMBIAR DIRECCION SI ES NECESARIO
 module.exports.start = () => {
-    server.bindAsync('127.0.0.1:50054', grpc.ServerCredentials.createInsecure(), (error, port) => {
+    server.bindAsync('0.0.0.0:50054', grpc.ServerCredentials.createInsecure(), (error, port) => {
         if (error) {
             console.error(`Error al iniciar el servidor gRPC: ${error.message}`);
             return;
         }
-        console.log(`gRPC Server corriendo en http://127.0.0.1:${port}`);
+        console.log(`gRPC Server corriendo en http://localhost:${port}`);
     });
 };
