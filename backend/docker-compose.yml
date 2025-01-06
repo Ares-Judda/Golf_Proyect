@@ -10,3 +10,5 @@ services:
       - "50051:50051"
     environment:
       - NODE_ENV=production
+    volumes:
+      - .:/app # Mapea el código local al contenedor (opcional, para desarrollo)
