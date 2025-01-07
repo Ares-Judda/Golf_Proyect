@@ -13,7 +13,7 @@ public class ShoppingCartTesting
         var requestBody = new
         {
             ID_Clothes = 13,
-            Quantity = 2
+            Quantity = 88
         };
         HttpClient client = new HttpClient
         {
@@ -21,7 +21,7 @@ public class ShoppingCartTesting
         };
         client.DefaultRequestHeaders.Add("accept", "application/json");
         var json = System.Text.Json.JsonSerializer.Serialize(requestBody);
-        Console.WriteLine(json); // Verificar el JSON generado
+        Console.WriteLine(json); 
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
         var response = await client.PostAsync($"/api/shoppingCar/add_articulo_to_car/{userId}", content);
         Assert.True(response.IsSuccessStatusCode, "Se esperaba que la solicitud pasara.");
@@ -29,6 +29,7 @@ public class ShoppingCartTesting
         Console.WriteLine(responseBody);
         Assert.Contains("Artículo añadido al carrito exitosamente", responseBody, StringComparison.OrdinalIgnoreCase);
     }
+
     [Fact]
     public static async Task add_articulo_to_car_Fail_ID()
     {
@@ -44,14 +45,15 @@ public class ShoppingCartTesting
         };
         client.DefaultRequestHeaders.Add("accept", "application/json");
         var json = System.Text.Json.JsonSerializer.Serialize(requestBody);
-        Console.WriteLine(json); // Verificar el JSON generado
+        Console.WriteLine(json);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
         var response = await client.PostAsync($"/api/shoppingCar/add_articulo_to_car/{userId}", content);
         Assert.False(response.IsSuccessStatusCode, "Se esperaba que la solicitud fallara");
         var responseBody = await response.Content.ReadAsStringAsync();
         Console.WriteLine(responseBody);
     }
-     [Fact]
+    
+    [Fact]
     public static async Task add_articulo_to_car_Fail_User()
     {
         string userId = "00000000-0000-0000-0000-000000000000"; // Usuario inválido
@@ -66,7 +68,7 @@ public class ShoppingCartTesting
         };
         client.DefaultRequestHeaders.Add("accept", "application/json");
         var json = System.Text.Json.JsonSerializer.Serialize(requestBody);
-        Console.WriteLine(json); // Verificar el JSON generado
+        Console.WriteLine(json);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
         var response = await client.PostAsync($"/api/shoppingCar/add_articulo_to_car/{userId}", content);
         Assert.False(response.IsSuccessStatusCode, "Se esperaba que la solicitud fallara");
@@ -85,8 +87,7 @@ public class ShoppingCartTesting
         var result = await client.GetAsync($"/api/shoppingCar/get_shopping_car/{ID_Client}");
         result.EnsureSuccessStatusCode();
     }
-    //TOKEN 
-    /*[Fact]
+    [Fact] //falso negativo
     public static async Task GetShoppingCar_Fail()
     {
         string validToken = "12e54ce2-cbc9-11ef-a5e3-16ffe0270025";
@@ -102,7 +103,7 @@ public class ShoppingCartTesting
         var responseBody = await result.Content.ReadAsStringAsync();
         Console.WriteLine(responseBody);
         Assert.Contains("No se encontraron artículos en el carrito", responseBody, StringComparison.OrdinalIgnoreCase);
-    }*/
+    }
 
     [Fact]
     public static async Task Update_Quantity_Success()

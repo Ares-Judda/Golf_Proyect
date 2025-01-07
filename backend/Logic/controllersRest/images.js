@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 
 const uploadImage = (req, res) => {
-    if (!req.file) {
+    if (!req.file|| req.file.size === 0) {
         return res.status(400).send({ message: 'No se ha subido ningún archivo.' });
     }
     console.log(`Archivo guardado en: ${req.file.path}`); // Ruta física del archivo

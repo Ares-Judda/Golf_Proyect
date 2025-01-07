@@ -5,17 +5,14 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 public class UserTesting
+
 {
-    //INVALID TOKEN, HACER FALSO NEGATIVO
     public static async Task GetAllUsuarios_Test_Success()
         {
-        // Example valid JWT token for the user
-        string tokenJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiIxMmU1NGNlMi1jYmM5LTExZWYtYTVlMy0xNmZmZTAyNzAwMjUiLCJpYXQiOjE3MzYxNDQ4ODUsImV4cCI6MTczNjE0NDkwNX0.TK_TKUeCLfUzs0SKzIcidmJwhJ10AF5UogtbpXfKV8I"; // Replace with a valid JWT token
-
         HttpClient client = new HttpClient();
         client.BaseAddress = new Uri("http://localhost:8085");
         client.DefaultRequestHeaders.Add("accept", "application/json");
-        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokenJwt);
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "12e54ce2-cbc9-11ef-a5e3-16ffe0270025");
 
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/usuarios/get_all_usuarios");
         var response = await client.SendAsync(request);
@@ -139,10 +136,10 @@ public class UserTesting
             email = "newuser@example.com",
             role = "CLIENT_ROLE",
             password = "SecurePassword123",
-            imagen = "path/to/image.jpg",
-            name = "Alesis",
-            lastname = "TesteSuccess",
-            userName = "alesisd123"
+            imagen = "Test, esta no es una ruta",
+            name = "TestName",
+            lastname = "TestLastname",
+            userName = "Test123"
         };
 
         HttpClient client = new HttpClient();
@@ -214,5 +211,4 @@ public class UserTesting
 
         Assert.Contains("El correo ya está registrado", responseBody, StringComparison.OrdinalIgnoreCase);
     }
-    */
 }
