@@ -82,12 +82,12 @@ public class SalesTesting
         var responseBody = await response.Content.ReadAsStringAsync();
         Console.WriteLine(responseBody);
         Assert.Contains("Compra procesada correctamente", responseBody, StringComparison.OrdinalIgnoreCase);
-    }*/
-
+    }
+    //TOKEN
     [Fact]
     public static async Task BuyShoppingCar_Test_Fail_WrongUser()
     {
-        string userId = "00000000-0000-0000-0000-000000000000";//Usuario loggeado
+        string userId = "00000000-0000-0000-0000-000000000000";
         var updatedClothes = new[]
         {
             new { ID_Clothes = "999", newQuantity = 222 },
@@ -114,7 +114,7 @@ public class SalesTesting
     [Fact]
     public static async Task BuyShoppingCar_Test_Fail_Wrong_Qty()
     {
-        string userId = "12e54ce2-cbc9-11ef-a5e3-16ffe0270025";//Usuario loggeado
+        string userId = "12e54ce2-cbc9-11ef-a5e3-16ffe0270025";//Usuario loggeado (Debe hacer match al carrito)
         var updatedClothes = new[]
         { //Tienen que corresponder a carrito
             new { ID_Clothes = "14", newQuantity = 400 },
