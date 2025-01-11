@@ -1,150 +1,399 @@
 openapi: 3.0.0
 info:
   title: API de Tienda de Ropa
-  description: API para gestionar usuarios y operaciones relacionadas con la tienda de ropa.
+  description: API para gestionar usuarios, ropa y operaciones relacionadas con la tienda de ropa.
   version: 1.0.0
 servers:
   - url: http://localhost:8085/api
     description: Servidor local
 
 paths:
-  /usuarios/get_all_usuarios:
+  /clothes/get_all_articulos:
     get:
-      summary: Obtener todos los usuarios
-      description: Devuelve una lista de todos los usuarios en la base de datos.
+      tags:
+        - ropa
+      summary: "Obtiene todos los artículos"
+      description: "Devuelve una lista de todos los artículos de la base de datos."
       responses:
-        '200':
-          description: Lista de usuarios
+        "200":
+          description: "Lista de artículos"
           content:
             application/json:
               schema:
-                type: object
+                type: "object"
                 properties:
-                  usuarios:
-                    type: array
+                  articulos:
+                    type: "array"
                     items:
-                      type: object
+                      type: "object"
                       properties:
-                        ID_User:
-                          type: string
-                        email:
-                          type: string
-                        role:
-                          type: string
-                        imagen:
-                          type: string
-                        username:
-                          type: string
-        '500':
-          description: Error interno del servidor
+                        ID_Clothes:
+                          type: "integer"
+                        name:
+                          type: "string"
+                        clothecategory:
+                          type: "string"
+                        price:
+                          type: "number"
+                        size:
+                          type: "string"
+                        quota:
+                          type: "integer"
+        "500":
+          description: "Error interno del servidor"
 
-  /auth/login:
+  /clothes/get_articulos_by_selling:
+    get:
+      tags:
+        - ropa
+      summary: "Obtiene artículos por vendedor"
+      description: "Devuelve una lista de artículos relacionados a un vendedor."
+      parameters:
+        - name: "ID_Selling"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+          description: "El ID del vendedor"
+      responses:
+        "200":
+          description: "Lista de artículos relacionados al vendedor"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  articulosRelacionadoAlVendedor:
+                    type: "array"
+                    items:
+                      type: "object"
+                      properties:
+                        ID_Clothes:
+                          type: "integer"
+                        name:
+                          type: "string"
+                        clothecategory:
+                          type: "string"
+                        price:
+                          type: "number"
+                        size:
+                          type: "string"
+                        quota:
+                          type: "integer"
+        "404":
+          description: "Vendedor no encontrado"
+        "500":
+          description: "Error interno del servidor"
+
+  /clothes/get_articulo_by_name:
+    get:
+      tags:
+        - ropa
+      summary: "Obtiene artículo por nombre"
+      description: "Devuelve un artículo que coincide con el nombre proporcionado."
+      parameters:
+        - name: "name"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+          description: "El nombre del artículo"
+      responses:
+        "200":
+          description: "Artículo encontrado"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  articulo:
+                    type: "array"
+                    items:
+                      type: "object"
+                      properties:
+                        ID_Clothes:
+                          type: "integer"
+                        name:
+                          type: "string"
+                        clothecategory:
+                          type: "string"
+                        price:
+                          type: "number"
+                        size:
+                          type: "string"
+                        quota:
+                          type: "integer"
+        "404":
+          description: "No se encontraron artículos con ese nombre"
+        "500":
+          description: "Error interno del servidor"
+
+  /clothes/save_article:
     post:
-      summary: Login de usuario
-      description: Autentica a un usuario y devuelve un token.
+      tags:
+        - ropa
+      summary: "Crea un nuevo artículo"
+      description: "Registra un nuevo artículo en la base de datos."
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
+              type: "object"
               properties:
-                email:
-                  type: string
-                password:
-                  type: string
+                name:
+                  type: "string"
+                clothecategory:
+                  type: "string"
+                price:
+                  type: "number"
+                size:
+                  type: "string"
+                quota:
+                  type: "integer"
               required:
-                - email
-                - password
+                - name
+                - clothecategory
+                - price
+                - size
+                - quota
       responses:
-        '200':
-          description: Inicio de sesión exitoso
-          headers:
-            x-token:
-              description: Token JWT para autenticación
-              schema:
-                type: string
+        "201":
+          description: "Artículo creado exitosamente"
+        "400":
+          description: "Faltan campos obligatorios"
+        "500":
+          description: "Error interno al guardar el artículo"
+
+  /shoppingCar/buy_shopping_car/{userId}:
+    post:
+      tags:
+        - carrito de compras
+      summary: "Procesa la compra del carrito de un usuario"
+      description: "Permite a un usuario realizar la compra de los artículos en su carrito."
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            description: "ID del usuario que realiza la compra"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                updatedClothes:
+                  type: "array"
+                  description: "Lista de artículos que el usuario desea actualizar y comprar"
+                  items:
+                    type: "object"
+                    properties:
+                      ID_Clothes:
+                        type: "string"
+                        description: "ID del artículo en el carrito"
+                      newQuantity:
+                        type: "integer"
+                        description: "Nueva cantidad solicitada por el usuario"
+      responses:
+        "200":
+          description: "Compra procesada correctamente"
+        "400":
+          description: "Error de validación o cantidad solicitada excede las existencias"
+        "404":
+          description: "Artículo no encontrado en el carrito o no disponible"
+        "500":
+          description: "Error interno al procesar la compra"
+      security:
+        - bearerAuth: []
+
+  /shoppingCar/get_purchase_history_by_client/{userId}:
+    get:
+      tags:
+        - carrito de compras
+      summary: "Obtiene el historial de compras de un cliente"
+      description: "Devuelve todos los artículos comprados por un cliente según su ID."
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+          description: "ID del cliente para obtener su historial de compras"
+      responses:
+        "200":
+          description: "Historial de compras del cliente recuperado con éxito"
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  ID_User:
-                    type: string
-                  email:
-                    type: string
-                  role:
-                    type: string
-                  imagen:
-                    type: string
-                  username:
-                    type: string
-        '401':
-          description: Credenciales inválidas
-        '500':
-          description: Error interno del servidor
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    ID_Clothes:
+                      type: "string"
+                      description: "ID del artículo comprado"
+                    quantity:
+                      type: "integer"
+                      description: "Cantidad comprada"
+                    purchase_date:
+                      type: "string"
+                      format: "date-time"
+                      description: "Fecha de la compra"
+        "400":
+          description: "ID del cliente no proporcionado"
+        "404":
+          description: "No se encontraron compras para este cliente"
+        "500":
+          description: "Error interno al recuperar el historial de compras"
 
-  /usuarios/logout:
+  /shoppingCar/add_articulo_to_car/{userId}:
     post:
-      summary: Cerrar sesión
-      description: Cierra la sesión del usuario y elimina el token asociado.
-      responses:
-        '200':
-          description: Sesión cerrada exitosamente
-        '400':
-          description: No hay usuario activo
-        '500':
-          description: Error al cerrar sesión
-
-  /usuarios/get_usuario:
-    get:
-      summary: Obtener información de un usuario por ID
-      description: Devuelve los detalles de un usuario específico.
+      tags:
+        - carrito de compras
+      summary: "Añadir un artículo al carrito de compras."
       parameters:
-        - name: id
+        - name: userId
           in: path
           required: true
-          description: ID del usuario
           schema:
             type: string
+          description: ID del usuario.
+        - name: body
+          in: body
+          required: true
+          description: Detalles del artículo a añadir.
+          schema:
+            type: object
+            properties:
+              ID_Clothes:
+                type: string
+                description: ID del artículo.
+              Quantity:
+                type: integer
+                description: Cantidad del artículo.
+            required:
+              - ID_Clothes
+              - Quantity
       responses:
-        '200':
-          description: Información del usuario
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  email:
-                    type: string
-                  role:
-                    type: string
-                  imagen:
-                    type: string
-                  username:
-                    type: string
-                  name:
-                    type: string
-                  lastname:
-                    type: string
-                  cellphone:
-                    type: string
-                  datebirth:
-                    type: string
-                    format: date
-                  address:
-                    type: string
-                  zipcode:
-                    type: string
-        '404':
-          description: Usuario no encontrado
-        '500':
-          description: Error interno del servidor
+        "200":
+          description: "Artículo añadido al carrito exitosamente."
+        "400":
+          description: "Faltan campos obligatorios."
+        "500":
+          description: "Error interno del servidor."
+
+  /shoppingCar/get_shopping_car/{userId}:
+    get:
+      tags:
+        - carrito de compras
+      summary: "Obtener los artículos en el carrito."
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del usuario.
+      responses:
+        "200":
+          description: "Lista de artículos en el carrito."
+        "400":
+          description: "Se requiere un ID de usuario."
+        "404":
+          description: "No se encontraron artículos en el carrito."
+        "500":
+          description: "Error en el servidor."
+
+  /shoppingCar/update_quantity/{userId}:
+    post:
+      tags:
+        - carrito de compras
+      summary: "Actualizar la cantidad de un artículo en el carrito."
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del usuario.
+        - name: body
+          in: body
+          required: true
+          description: Información para actualizar la cantidad.
+          schema:
+            type: object
+            properties:
+              ID_Clothes:
+                type: string
+                description: ID del artículo.
+              newQuantity:
+                type: integer
+                description: Nueva cantidad.
+            required:
+              - ID_Clothes
+              - newQuantity
+      responses:
+        "200":
+          description: "Cantidad actualizada exitosamente."
+        "400":
+          description: "Faltan campos obligatorios."
+        "404":
+          description: "No se encontró el artículo para actualizar."
+        "500":
+          description: "Error interno del servidor."
+
+  /shoppingCar/delete_from_car/{userId}:
+    post:
+      tags:
+        - carrito de compras
+      summary: "Eliminar un artículo del carrito de compras."
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del usuario.
+        - name: body
+          in: body
+          required: true
+          description: Detalles del artículo a eliminar.
+          schema:
+            type: object
+            properties:
+              ID_Clothes:
+                type: string
+                description: ID del artículo.
+            required:
+              - ID_Clothes
+      responses:
+        "200":
+          description: "Artículo eliminado del carrito."
+        "400":
+          description: "ID del artículo no proporcionado."
+        "500":
+          description: "Error interno del servidor."
+  /usuarios/get_all_usuarios:
+    get:
+      tags:
+        - "usuarios"
+      summary: "Obtener todos los usuarios."
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: "Lista de usuarios obtenida correctamente."
+        "500":
+          description: "Error interno del servidor."
 
   /usuarios/save_usuario:
     post:
-      summary: Registrar un usuario
-      description: Crea un nuevo usuario y lo asigna a su rol correspondiente.
+      tags:
+        - "usuarios"
+      summary: "Registrar un nuevo usuario."
       requestBody:
         required: true
         content:
@@ -154,38 +403,62 @@ paths:
               properties:
                 email:
                   type: string
-                password:
-                  type: string
                 role:
                   type: string
+                password:
+                  type: string
                 imagen:
+                  type: string
+                userName:
                   type: string
                 name:
                   type: string
                 lastname:
                   type: string
-                userName:
-                  type: string
-              required:
-                - email
-                - password
-                - role
-                - imagen
-                - name
-                - lastname
-                - userName
       responses:
-        '200':
-          description: Usuario registrado exitosamente
-        '400':
-          description: Error de validación o datos duplicados
-        '500':
-          description: Error interno del servidor
+        "200":
+          description: "Usuario registrado exitosamente."
+        "400":
+          description: "Faltan campos obligatorios o el correo/nombre de usuario ya existen."
+        "500":
+          description: "Error interno del servidor."
 
-  /usuarios/update_usuario:
+  /usuarios/get_usuario/{userId}:
+    get:
+      tags:
+        - "usuarios"
+      summary: "Obtener información de un usuario específico."
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: "ID del usuario."
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: "Información del usuario obtenida correctamente."
+        "400":
+          description: "ID de usuario no proporcionado."
+        "404":
+          description: "Usuario no encontrado."
+        "500":
+          description: "Error en el servidor."
+
+  /usuarios/update_usuario/{userId}:
     put:
-      summary: Actualizar un usuario
-      description: Actualiza la información de un usuario existente.
+      tags:
+        - "usuarios"
+      summary: "Actualizar los datos de un usuario."
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: "ID del usuario a actualizar."
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -195,12 +468,88 @@ paths:
               properties:
                 actualizaciones:
                   type: object
-                  additionalProperties:
-                    type: string
+                  additionalProperties: true
+      security:
+        - bearerAuth: []
       responses:
-        '200':
-          description: Usuario actualizado exitosamente
-        '400':
-          description: Campos faltantes o inválidos
-        '500':
+        "200":
+          description: "Usuario actualizado exitosamente."
+        "400":
+          description: "No se proporcionaron campos a actualizar."
+        "500":
+          description: "Error en el servidor."
+
+  /usuarios/logout:
+    get:
+      tags:
+        - "usuarios"
+      summary: "Cerrar sesión de un usuario."
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: "Sesión cerrada exitosamente."
+        "400":
+          description: "No hay usuario activo para cerrar sesión."
+        "500":
+          description: "Error al cerrar sesión."
+  /sales/shopping_car/buy/{userId}:
+    post:
+      tags:
+        - Ventas
+      summary: Compra los artículos del carrito de compras
+      description: Procesa la compra de los artículos del carrito de un cliente, actualizando las existencias y registrando el historial de compras.
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: ID del usuario (cliente)
+          schema:
+            type: string
+        - in: body
+          name: updatedClothes
+          required: true
+          description: Lista de artículos con la cantidad actualizada
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                ID_Clothes:
+                  type: integer
+                  description: ID del artículo de ropa
+                newQuantity:
+                  type: integer
+                  description: Nueva cantidad del artículo en el carrito
+      responses:
+        200:
+          description: Compra procesada correctamente
+        400:
+          description: La cantidad solicitada excede las existencias o el artículo no está disponible
+        404:
+          description: No se encontraron artículos en el carrito o el artículo no existe
+        500:
+          description: Error en el procesamiento de la compra
+
+  /sales/shopping_car/history/{userId}:
+    get:
+      tags:
+        - Ventas
+      summary: Obtiene el historial de compras de un cliente
+      description: Devuelve el historial de compras de un cliente específico.
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: ID del cliente
+          schema:
+            type: string
+      responses:
+        200:
+          description: Historial de compras obtenido correctamente
+        400:
+          description: ID de cliente no proporcionado
+        404:
+          description: No se encontraron compras para este cliente
+        500:
           description: Error interno del servidor
