@@ -5,7 +5,7 @@ const getAllArticulos = (call, callback) => {
     try {
         console.log('Solicitud recibida para obtener todos los artículos...');
         
-        connection.query('SELECT * FROM clothes', (err, results) => {
+        connection.query('SELECT c.ID_Clothes, c.name, c.clothecategory, c.price, c.size, c.quota, p.pick FROM clothes c LEFT JOIN pickclothes p ON c.ID_Clothes = p.ID_Clothes', (err, results) => {
             if (err) {
                 console.error('Error al obtener artículos: ', err);
                 return callback({
@@ -22,11 +22,12 @@ const getAllArticulos = (call, callback) => {
                     clothecategory: row.clothecategory,
                     price: row.price,
                     quota: row.quota,
-                    size: row.size  
+                    size: row.size,
+                    image: row.pick
                 };
             });
 
-            console.log('Artículos obtenidos correctamente.');
+            console.log('Artículos obtenidos correctamente.', results);
             callback(null, { articulos });
         });
 
@@ -50,7 +51,7 @@ const getArticulosBySelling = (ID_Selling, callback) => {
             });
         }
 
-        connection.query('SELECT c.ID_Clothes, c.name, c.clothecategory, c.price, c.size, c.quota FROM selling_clothes sc INNER JOIN clothes c ON sc.ID_Clothes = c.ID_Clothes WHERE sc.ID_Selling = ?', [ID_Selling], (err, results) => {
+        connection.query('SELECT c.ID_Clothes, c.name, c.clothecategory, c.price, c.size, c.quota, p.pick FROM selling_clothes sc INNER JOIN clothes c ON sc.ID_Clothes = c.ID_Clothes LEFT JOIN pickclothes p ON c.ID_Clothes = p.ID_Clothes WHERE sc.ID_Selling = ?', [ID_Selling], (err, results) => {
             if (err) {
                 console.error('Error al obtener artículos relacionados al vendedor: ', err);
                 return callback({
@@ -75,7 +76,8 @@ const getArticulosBySelling = (ID_Selling, callback) => {
                     clothecategory: row.clothecategory,
                     price: row.price,
                     quota: row.quota,
-                    size: row.size
+                    size: row.size,
+                    image: row.pick
                 };
             });
 
@@ -90,9 +92,8 @@ const getArticulosBySelling = (ID_Selling, callback) => {
     }
 };
 
-const saveArticulo = (name, clothecategory, price, size, quota, ID_Selling, callback) => {
+const saveArticulo = (name, clothecategory, price, size, quota, ID_Selling, image, callback) => {
     try {
-        // Insertar los datos del artículo en la base de datos
         connection.query(
             'INSERT INTO clothes (name, clothecategory, price, size, quota) VALUES (?, ?, ?, ?, ?)',
             [name, clothecategory, price, size, quota],
@@ -105,12 +106,10 @@ const saveArticulo = (name, clothecategory, price, size, quota, ID_Selling, call
                     });
                 }
 
-                // Obtener el ID del artículo recién insertado
-                const ID_Clothes = results.insertId; // El insertId contiene el ID generado por la base de datos
+                const ID_Clothes = results.insertId;
 
                 console.log("Se ha agregado un nuevo artículo con ID_Clothes: ", ID_Clothes);
 
-                // Ahora insertar el registro en la tabla selling_clothes
                 connection.query(
                     'INSERT INTO selling_clothes (ID_Clothes, ID_Selling) VALUES (?, ?)',
                     [ID_Clothes, ID_Selling],
@@ -125,8 +124,23 @@ const saveArticulo = (name, clothecategory, price, size, quota, ID_Selling, call
 
                         console.log("Se ha agregado el registro a selling_clothes");
 
-                        // Enviar la respuesta al cliente
-                        callback(null, { mensaje: 'Artículo creado y asociado exitosamente' });
+                        connection.query(
+                            'INSERT INTO pickclothes (ID_Clothes, pick) VALUES (?, ?)',
+                            [ID_Clothes, image],
+                            (err3) => {
+                                if (err3) {
+                                    console.error('Error al guardar el registro en pickclothes: ', err3);
+                                    return callback({
+                                        code: grpc.status.INTERNAL,
+                                        details: 'Error al guardar el registro en pickclothes'
+                                    });
+                                }
+
+                                console.log("Se ha agregado el registro a pickclothes");
+
+                                callback(null, { mensaje: 'Artículo creado y asociado exitosamente' });
+                            }
+                        );
                     }
                 );
             }
@@ -201,58 +215,130 @@ const deleteArticulo = (ID_Clothes, callback) => {
 
 const update_articulo = (ID_Clothes, actualizaciones, callback) => {
     try {
-        // Validar que se proporcionen tanto el ID como los campos a actualizar
         if (!ID_Clothes) {
             return callback({
                 code: grpc.status.INVALID_ARGUMENT,
-                message: 'El ID del artículo no fue proporcionado'
+                message: 'El ID del artículo no fue proporcionado',
             });
         }
 
         if (!actualizaciones || Object.keys(actualizaciones).length === 0) {
             return callback({
                 code: grpc.status.INVALID_ARGUMENT,
-                message: 'No se proporcionaron campos a actualizar'
+                message: 'No se proporcionaron campos a actualizar',
             });
         }
 
-        // Construir dinámicamente los campos a actualizar
-        const updates = Object.keys(actualizaciones)
+        const clothesUpdates = Object.keys(actualizaciones)
+            .filter(key => key !== 'pick') 
             .map(key => `${key} = ?`)
             .join(', ');
 
-        // Obtener los valores de las actualizaciones
-        const values = Object.values(actualizaciones);
+        const clothesValues = Object.keys(actualizaciones)
+            .filter(key => key !== 'pick')
+            .map(key => actualizaciones[key]);
 
-        // Ejecutar la consulta para actualizar el artículo
-        connection.query(
-            `UPDATE clothes SET ${updates} WHERE ID_Clothes = ?`,
-            [...values, ID_Clothes], // Agregar el ID al final
-            (err, result) => {
-                if (err) {
-                    console.error('Error al actualizar artículo:', err);
-                    return callback({
-                        code: grpc.status.INTERNAL,
-                        message: 'Error interno al actualizar artículo'
-                    });
-                }
+        const pickValue = actualizaciones.pick;
 
-                if (result.affectedRows === 0) {
-                    return callback({
-                        code: grpc.status.NOT_FOUND,
-                        message: 'Artículo no encontrado'
-                    });
-                }
+        const updateClothesQuery = clothesUpdates
+            ? `UPDATE clothes SET ${clothesUpdates} WHERE ID_Clothes = ?`
+            : null;
 
-                // Respuesta exitosa
-                callback(null, { mensaje: 'Artículo actualizado exitosamente' });
+        connection.beginTransaction(err => {
+            if (err) {
+                console.error('Error al iniciar la transacción:', err);
+                return callback({
+                    code: grpc.status.INTERNAL,
+                    message: 'Error interno al iniciar la transacción',
+                });
             }
-        );
+
+            const updateClothes = updateClothesQuery
+                ? new Promise((resolve, reject) => {
+                      connection.query(
+                          updateClothesQuery,
+                          [...clothesValues, ID_Clothes],
+                          (err, result) => {
+                              if (err) return reject(err);
+                              resolve(result);
+                          }
+                      );
+                  })
+                : Promise.resolve();
+
+            const validatePick = pickValue
+                ? new Promise((resolve, reject) => {
+                      connection.query(
+                          `SELECT 1 FROM pickclothes WHERE ID_Clothes = ?`,
+                          [ID_Clothes],
+                          (err, results) => {
+                              if (err) return reject(err);
+                              resolve(results.length > 0); 
+                          }
+                      );
+                  })
+                : Promise.resolve(false);
+
+            updateClothes
+                .then(() => validatePick)
+                .then(exists => {
+                    if (pickValue) {
+                        if (exists) {
+                            return new Promise((resolve, reject) => {
+                                connection.query(
+                                    `UPDATE pickclothes SET pick = ? WHERE ID_Clothes = ?`,
+                                    [pickValue, ID_Clothes],
+                                    (err, result) => {
+                                        if (err) return reject(err);
+                                        resolve(result);
+                                    }
+                                );
+                            });
+                        } else {
+                            return new Promise((resolve, reject) => {
+                                connection.query(
+                                    `INSERT INTO pickclothes (pick, ID_Clothes) VALUES (?, ?)`,
+                                    [pickValue, ID_Clothes],
+                                    (err, result) => {
+                                        if (err) return reject(err);
+                                        resolve(result);
+                                    }
+                                );
+                            });
+                        }
+                    }
+                    return Promise.resolve();
+                })
+                .then(() => {
+                    connection.commit(err => {
+                        if (err) {
+                            console.error('Error al confirmar la transacción:', err);
+                            connection.rollback(() => {
+                                callback({
+                                    code: grpc.status.INTERNAL,
+                                    message: 'Error interno al confirmar la transacción',
+                                });
+                            });
+                        } else {
+                            callback(null, { mensaje: 'Artículo actualizado exitosamente' });
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error durante la actualización:', error);
+                    connection.rollback(() => {
+                        callback({
+                            code: grpc.status.INTERNAL,
+                            message: 'Error interno durante la actualización',
+                        });
+                    });
+                });
+        });
     } catch (error) {
         console.error('Error en la actualización del artículo:', error);
         callback({
             code: grpc.status.INTERNAL,
-            message: 'Error interno en el servidor'
+            message: 'Error interno en el servidor',
         });
     }
 };
@@ -266,7 +352,7 @@ const getArticleByName = (name, callback) => {
             });
         }
 
-        connection.query('SELECT * FROM clothes WHERE name LIKE ?', [`%${name}%`], (err, results) => {
+        connection.query('SELECT c.ID_Clothes, c.name, c.clothecategory, c.price, c.size, c.quota, p.pick FROM clothes c LEFT JOIN pickclothes p ON c.ID_Clothes = p.ID_Clothes WHERE name LIKE ?', [`%${name}%`], (err, results) => {
             if (err) {
                 console.error('Error al buscar el artículo: ', err);
                 return callback({
@@ -275,7 +361,6 @@ const getArticleByName = (name, callback) => {
                 });
             }
 
-            // Si no hay artículos, retornamos un mensaje indicando que no se encontraron
             if (results.length === 0) {
                 return callback({
                     code: grpc.status.NOT_FOUND,
@@ -283,21 +368,68 @@ const getArticleByName = (name, callback) => {
                 });
             }
 
-            // Mapear los resultados a la estructura esperada en ArticulosResponse
             const articulos = results.map(row => ({
                 ID_Clothes: row.ID_Clothes,
                 name: row.name,
                 clothecategory: row.clothecategory,
                 price: row.price,
                 quota: row.quota,
-                size: row.size
+                size: row.size,
+                image: row.pick
             }));
-
-            // Enviar los resultados al cliente
+            
+            console.log('Artículos obtenidos correctamente.', results);
+          
             callback(null, { articulos });
         });
     } catch (error) {
         console.error('Error al buscar el artículo: ', error);
+        callback({
+            code: grpc.status.INTERNAL,
+            details: 'Error interno inesperado del servidor'
+        });
+    }
+};
+
+const getArticlesBySellingAndName = (ID_Selling, name, callback) => {
+    try {
+        if (!ID_Selling || !name) {
+            return callback({
+                code: grpc.status.INVALID_ARGUMENT,
+                details: "El nombre del artículo o el ID del vendedor no fueron proporcionados"
+            });
+        }
+
+        connection.query('SELECT c.ID_Clothes, c.name, c.clothecategory, c.price, c.size, c.quota, p.pick FROM selling_clothes sc INNER JOIN clothes c ON sc.ID_Clothes = c.ID_Clothes LEFT JOIN pickclothes p ON c.ID_Clothes = p.ID_Clothes WHERE sc.ID_Selling = ? AND c.name LIKE ?', [ID_Selling, `%${name}%`], (err, results) => {
+            if (err) {
+                console.error('Error al buscar los artículos por vendedor y nombre: ', err);
+                return callback({
+                    code: grpc.status.INTERNAL,
+                    details: 'Error interno al buscar los artículos'
+                });
+            }
+
+            if (results.length === 0) {
+                return callback({
+                    code: grpc.status.NOT_FOUND,
+                    details: 'No se encontraron artículos con ese nombre para el vendedor proporcionado'
+                });
+            }
+
+            const articulos = results.map(row => ({
+                ID_Clothes: row.ID_Clothes,
+                name: row.name,
+                clothecategory: row.clothecategory,
+                price: row.price,
+                quota: row.quota,
+                size: row.size,
+                image: row.pick
+            }));
+
+            callback(null, { articulos });
+        });
+    } catch (error) {
+        console.error('Error inesperado al buscar los artículos: ', error);
         callback({
             code: grpc.status.INTERNAL,
             details: 'Error interno inesperado del servidor'
@@ -314,7 +446,7 @@ const getArticleByCategory = (clothecategory, callback) => {
             });
         }
 
-        connection.query('SELECT * FROM clothes WHERE clothecategory = ?', [clothecategory], (err, results) => {
+        connection.query('SELECT c.ID_Clothes, c.name, c.clothecategory, c.price, c.size, c.quota, p.pick FROM clothes c LEFT JOIN pickclothes p ON c.ID_Clothes = p.ID_Clothes WHERE clothecategory = ?', [clothecategory], (err, results) => {
             if (err) {
                 console.error('Error al buscar el artículo: ', err);
                 return callback({
@@ -323,7 +455,6 @@ const getArticleByCategory = (clothecategory, callback) => {
                 });
             }
 
-            // Si no hay artículos, retornamos un mensaje indicando que no se encontraron
             if (results.length === 0) {
                 return callback({
                     code: grpc.status.NOT_FOUND,
@@ -331,17 +462,18 @@ const getArticleByCategory = (clothecategory, callback) => {
                 });
             }
 
-            // Mapear los resultados a la estructura esperada en ArticulosResponse
             const articulos = results.map(row => ({
                 ID_Clothes: row.ID_Clothes,
                 name: row.name,
                 clothecategory: row.clothecategory,
                 price: row.price,
                 quota: row.quota,
-                size: row.size
+                size: row.size,
+                image: row.pick
             }));
 
-            // Enviar los resultados al cliente
+            console.log('Artículos obtenidos correctamente.', results);
+            
             callback(null, { articulos });
         });
     } catch (error) {
@@ -353,5 +485,51 @@ const getArticleByCategory = (clothecategory, callback) => {
     }
 };
 
+const getArticlesBySellingAndCategory = (ID_Selling, clothecategory, callback) => {
+    try {
+        if (!ID_Selling || !clothecategory) {
+            return callback({
+                code: grpc.status.INVALID_ARGUMENT,
+                details: "La categoria del artículo o el ID del vendedor no fueron proporcionados"
+            });
+        }
 
-module.exports = { getAllArticulos, getArticulosBySelling, saveArticulo, deleteArticulo, update_articulo, getArticleByName, getArticleByCategory };
+        connection.query('SELECT c.ID_Clothes, c.name, c.clothecategory, c.price, c.size, c.quota, p.pick FROM selling_clothes sc INNER JOIN clothes c ON sc.ID_Clothes = c.ID_Clothes LEFT JOIN pickclothes p ON c.ID_Clothes = p.ID_Clothes WHERE sc.ID_Selling = ? AND c.clothecategory = ?', [ID_Selling, clothecategory], (err, results) => {
+            if (err) {
+                console.error('Error al buscar los artículos por vendedor y nombre: ', err);
+                return callback({
+                    code: grpc.status.INTERNAL,
+                    details: 'Error interno al buscar los artículos'
+                });
+            }
+
+            if (results.length === 0) {
+                return callback({
+                    code: grpc.status.NOT_FOUND,
+                    details: 'No se encontraron artículos con ese nombre para el vendedor proporcionado'
+                });
+            }
+
+            const articulos = results.map(row => ({
+                ID_Clothes: row.ID_Clothes,
+                name: row.name,
+                clothecategory: row.clothecategory,
+                price: row.price,
+                quota: row.quota,
+                size: row.size,
+                image: row.pick
+            }));
+
+            callback(null, { articulos });
+        });
+    } catch (error) {
+        console.error('Error inesperado al buscar los artículos: ', error);
+        callback({
+            code: grpc.status.INTERNAL,
+            details: 'Error interno inesperado del servidor'
+        });
+    }
+};
+
+
+module.exports = { getAllArticulos, getArticulosBySelling, getArticlesBySellingAndName, getArticlesBySellingAndCategory, saveArticulo, deleteArticulo, update_articulo, getArticleByName, getArticleByCategory };

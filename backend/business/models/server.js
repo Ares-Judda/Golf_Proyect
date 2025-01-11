@@ -18,7 +18,6 @@ class Server {
         this.middlewares();
         this.routes();
         this.setupSwagger();
-        //grpcServerUser.start();
         grpcServerAuth.start();
         grpcServerClothes.start();
         grpcServerSales.start();
